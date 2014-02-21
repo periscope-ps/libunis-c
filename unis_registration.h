@@ -24,16 +24,6 @@ typedef struct unis_config_t {
 	int refresh_timer;
 } unis_config;
 
-const unis_config DEFAULT_UNIS_CONFIG = {
-  .name = NULL,
-  .type = NULL,
-  .endpoint = NULL,
-  .ifaces = { .ip_ports = NULL, .count = 0},
-  .do_register = 0,
-  .registration_interval = UNIS_REG_INTERVAL,
-  .refresh_timer = UNIS_REFRESH_TO
-};
-
 /* public methods */
 
 /*

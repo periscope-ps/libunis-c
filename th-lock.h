@@ -32,44 +32,6 @@ struct CRYPTO_dynlock_value {
 /*!
  * @brief
  *
- * @fn dyn_create_function(const char *file, int line)
- * @param file
- * @param line
- * @return 
- *
- * @details [detailed description]
- */
-static struct CRYPTO_dynlock_value *dyn_create_function(const char *file, int line);
-
-/*!
- * @brief
- *
- * @fn dyn_lock_function(int mode, struct CRYPTO_dynlock_value *l, const char *file, int line)
- * @param mode 
- * @param l
- * @param file
- * @param line
- *
- * @details [detailed description]
- */
-static void dyn_lock_function(int mode, struct CRYPTO_dynlock_value *l, const char *file, int line);
-
-/*!
- * @brief
- *
- * @fn dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, int line)
- * @param l
- * @param file
- * @param line
- * @return 
- *
- * @details [detailed description]
- */
-static void dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, int line);
-
-/*!
- * @brief
- *
  * @fn locking_function(int mode, int n, const char *file, int line)
  * @param mode 
  * @param n

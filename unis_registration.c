@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <math.h>
+#include <err.h>
 #include <jansson.h>
 #include <pthread.h>
 
@@ -112,7 +113,7 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
   json_t *listeners;
   json_error_t json_err;
   char *ips;
-  int ip_count, i, once = 1, port;
+  int i = 0, once = 1, port = 0;
 
   root = json_loads(service_instance, 0, &json_err);
   if (!root) {
