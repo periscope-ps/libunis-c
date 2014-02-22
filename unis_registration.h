@@ -29,7 +29,7 @@ typedef struct unis_config_t {
 /*
    should be called to set unis server settings
 */
-int unis_init(unis_config cc);
+int unis_init(unis_config* cc);
 
 /* 
    first param is the service name we're looking for

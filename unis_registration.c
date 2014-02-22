@@ -29,47 +29,47 @@ static char *service_instance = "\
 static int unis_make_reg_str(int interval, char *json, char **ret_json);
 static void *unis_registration_thread(void *arg);
 
-int unis_init(unis_config cc) {
+int unis_init(unis_config* cc) {
 
-  if (cc.name == NULL || !(config.name = strndup(cc.name, strlen(cc.name)))) {
+  if (cc->name == NULL || !(config.name = strndup(cc->name, strlen(cc->name)))) {
     dbg_info("No UNIS registration name specified!");
     return -1;
   }
 
-  if (cc.type == NULL || !(config.type = strndup(cc.type, strlen(cc.type)))) {
+  if (cc->type == NULL || !(config.type = strndup(cc->type, strlen(cc->type)))) {
     dbg_info("No UNIS service type specified!");
     return -1;
   }
 
-  if (cc.endpoint == NULL || !(config.endpoint = strndup(cc.endpoint, strlen(cc.endpoint)))) {
+  if (cc->endpoint == NULL || !(config.endpoint = strndup(cc->endpoint, strlen(cc->endpoint)))) {
     dbg_info("No UNIS endpoint specified!");
     return -1;
   }
 
-  if (cc.ifaces.count == 0) {
+  if (cc->ifaces.count == 0) {
     dbg_info("No interfaces are specified");
     return -1;
   } else {
-    config.ifaces.ip_ports = malloc(sizeof(unis_ip_port) * cc.ifaces.count);
+    config.ifaces.ip_ports = malloc(sizeof(unis_ip_port) * cc->ifaces.count);
     int i = 0;
-    for (i = 0; i < cc.ifaces.count; ++i) {
-      config.ifaces.ip_ports[i].ip = strdup(cc.ifaces.ip_ports[i].ip);
-      config.ifaces.ip_ports[i].port = cc.ifaces.ip_ports[i].port;
+    for (i = 0; i < cc->ifaces.count; ++i) {
+      config.ifaces.ip_ports[i].ip = strdup(cc->ifaces.ip_ports[i].ip);
+      config.ifaces.ip_ports[i].port = cc->ifaces.ip_ports[i].port;
     }
-    config.ifaces.count = cc.ifaces.count;
+    config.ifaces.count = cc->ifaces.count;
   }
 
-  config.do_register = cc.do_register;
+  config.do_register = cc->do_register;
 
-  config.refresh_timer = cc.refresh_timer;
+  config.refresh_timer = cc->refresh_timer;
   if (config.refresh_timer == UNIS_REFRESH_TO || config.refresh_timer <= 0) {
-    dbg_info("Refresh time not specified, using default %d", UNIS_REFRESH_TO);
+    dbg_info("Refresh time not specified, using default %d\n", UNIS_REFRESH_TO);
     config.refresh_timer = UNIS_REFRESH_TO;
   }
 
-  config.registration_interval = cc.registration_interval;
+  config.registration_interval = cc->registration_interval;
   if (config.registration_interval == UNIS_REG_INTERVAL || config.registration_interval <= 0) {
-    dbg_info("Registration interval not specified, using default %d", UNIS_REG_INTERVAL);
+    dbg_info("Registration interval not specified, using default %d\n", UNIS_REG_INTERVAL);
     config.registration_interval = UNIS_REG_INTERVAL;
   }
 
@@ -80,7 +80,7 @@ int unis_init(unis_config cc) {
   context.curl_persist = 0;
 
   if (init_curl(&context, 0) != 0) {
-    dbg_info("Could not start CURL context");
+    dbg_info("Could not start CURL context\n");
     return -1;
   }
 
@@ -92,14 +92,18 @@ int unis_init(unis_config cc) {
     /* start the registration thread */
     pthread_attr_t attr;
     if(pthread_attr_init(&attr) != 0) {
-      err(0, "can not pthread_attr_init");
+      dbg_info("can not pthread_attr_init\n");
+      return -1;
     }
     if(pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED) != 0) {
-      err(0, "pthread_attr_setdetachstate failed");
+      dbg_info("pthread_attr_setdetachstate failed\n");
+      return -1;
     }
     if (pthread_create(&thread, &attr, unis_registration_thread, &config) != 0) {
-      err(0, "Could not start UNIS registration thread");
+      dbg_info("Could not start UNIS registration thread\n");
       return -1;
+    } else {
+      dbg_info("Started thread\n");
     }
 
   }
@@ -172,6 +176,7 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
 }
 
 static void *unis_registration_thread(void *arg) {
+  dbg_info("in unis_registration_thread\n");
   struct timeval now;
   unis_config *cfg = (unis_config *)arg;
   curl_response *response;
@@ -184,12 +189,13 @@ static void *unis_registration_thread(void *arg) {
   asprintf(&url, "%s/%s", cfg->endpoint, "services");
 
   while (1) {
+    dbg_info("in while loop\n");
     if (reg_str != NULL) {
       reg_json = json_loads(reg_str, 0, &json_err);
       if (!reg_json) {
         /* we should validate the reg_str against the XSP Service schema
 http://unis.incntre.iu.edu/schema/ext/xspservice/1/xspservice */
-        err(5, "Could not decode registration string: %d: %s",
+        dbg_info("Could not decode registration string: %d: %s\n",
             json_err.line, json_err.text);
         continue;
       }
@@ -210,7 +216,7 @@ http://unis.incntre.iu.edu/schema/ext/xspservice/1/xspservice */
           &response);
 
       if (response && (response->status != 201)) {
-        err(5, "Error registering to UNIS: %s", response->data);
+        dbg_info("Error registering to UNIS: %s", response->data);
       }
       /* first time we register, save ID for future updates */
       else if (response && response->data && !sid) {
@@ -218,7 +224,7 @@ http://unis.incntre.iu.edu/schema/ext/xspservice/1/xspservice */
         json_t *key;
         resp = json_loads(response->data, 0, &json_err);
         if (!resp) {
-          err(5, "Could not decode registration response! %d: %s",
+          dbg_info("Could not decode registration response! %d: %s",
               json_err.line, json_err.text);
           continue;
         }

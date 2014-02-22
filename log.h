@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #ifndef DEBUG
-#define DEBUG 0
+#define DEBUG 1
 #endif
 
 //We do not have any other way to enable debugging now. So compile with -DDEBUG
