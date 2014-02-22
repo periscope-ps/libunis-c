@@ -5,9 +5,13 @@ AC_PREREQ([2.69])
 AC_INIT([libunis-c], [0.1], [https://github.com/periscope-ps/libunis-c])
 AC_CONFIG_SRCDIR([unis_registration.c])
 AM_INIT_AUTOMAKE([libunis-c], [0.1])
+LT_INIT()
 # Checks for programs.
 AC_PROG_CC
-AC_PROG_RANLIB
+AC_CONFIG_MACRO_DIR([m4])
+AC_LIBTOOL_DLOPEN
+AC_PROG_LIBTOOL
+
 
 # Checks for libraries.
 AC_CHECK_LIB([curl], [curl_easy_init], [],[
