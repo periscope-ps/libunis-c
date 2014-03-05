@@ -19,7 +19,7 @@ static char *reg_str = NULL;
 static char *service_instance = "\
 {\
   \"status\": \"ON\",\
-    \"$schema\": \"http://unis.incntre.iu.edu/schema/20120709/service#\",\
+    \"$schema\": \"http://unis.incntre.iu.edu/schema/20140214/service#\",\
     \"serviceType\": \"\",\
     \"name\": \"\",\
     \"accessPoint\": \"\",\

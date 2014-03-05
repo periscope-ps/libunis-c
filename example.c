@@ -16,14 +16,14 @@ int main()
   unis_config config = {
     .name = "Ibp Server",
     .type = "ibp_server",
-    .endpoint = "http://localhost:8888",
+    .endpoint = "http://198.129.50.8:8888",
     .ifaces = ip_port_array,
     .do_register = 1,
     .registration_interval = 5,
     .refresh_timer = UNIS_REFRESH_TO
   };
 
-  if(unis_init(config) == 0) {
+  if(unis_init(&config) == 0) {
     printf("success");
   }
 
