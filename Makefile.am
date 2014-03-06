@@ -9,11 +9,7 @@ lib_LTLIBRARIES = libunis-c.la
 library_includedir = $(includedir)
 library_include_HEADERS = unis_registration.h
 
-#libunis_c_a_SOURCES = curl_context.c	curl_context.h log.h  th-lock.c  th-lock.h	unis_registration.c  unis_registration.h
-#libunis_c_a_LIBADD =
-
-libunis_c_la_SOURCES = curl_context.c  curl_context.h log.h  th-lock.c  th-lock.h  unis_registration.c  unis_registration.h
-libunis_c_la_LIBADD = #-L/usr/local/lib -lcurl -lpthread -ljansson
+libunis_c_la_SOURCES = curl_context.c  curl_context.h log.h  th-lock.c  th-lock.h  unis_registration.c  unis_registration.h  compat.c compat.h
 libunis_c_la_LDFLAGS = -export-dynamic
 
 AM_CFLAGS = -fPIC

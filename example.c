@@ -6,18 +6,13 @@
 int main()
 {
   int i =0;
-  unis_ip_port ip_port = { .ip = "10.103.0.11", .port=5006};
-  unis_ip_port ip_ports[ ] = {ip_port};
-  unis_ip_port_array ip_port_array = {
-    .ip_ports = ip_ports,
-    .count = 1
-  };
 
   unis_config config = {
     .name = "Ibp Server",
     .type = "ibp_server",
     .endpoint = "http://198.129.50.8:8888",
-    .ifaces = ip_port_array,
+    .iface = "10.103.0.11",
+    .port = 5006,
     .do_register = 1,
     .registration_interval = 5,
     .refresh_timer = UNIS_REFRESH_TO

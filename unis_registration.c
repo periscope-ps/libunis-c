@@ -11,6 +11,7 @@
 #include "curl_context.h"
 #include "unis_registration.h"
 #include "log.h"
+#include "compat.h"
 
 static unis_config config;
 static curl_context context;
@@ -28,6 +29,7 @@ static char *service_instance = "\
 
 static int unis_make_reg_str(int interval, char *json, char **ret_json);
 static void *unis_registration_thread(void *arg);
+static json_t * __unis_get_json_listeners();
 
 int unis_init(unis_config* cc) {
 
@@ -46,18 +48,12 @@ int unis_init(unis_config* cc) {
     return -1;
   }
 
-  if (cc->ifaces.count == 0) {
+  if (cc->iface == NULL || !(config.iface = strndup(cc->iface, strlen(cc->iface)))) {
     dbg_info("No interfaces are specified");
     return -1;
-  } else {
-    config.ifaces.ip_ports = malloc(sizeof(unis_ip_port) * cc->ifaces.count);
-    int i = 0;
-    for (i = 0; i < cc->ifaces.count; ++i) {
-      config.ifaces.ip_ports[i].ip = strdup(cc->ifaces.ip_ports[i].ip);
-      config.ifaces.ip_ports[i].port = cc->ifaces.ip_ports[i].port;
-    }
-    config.ifaces.count = cc->ifaces.count;
   }
+
+  config.port = cc->port;
 
   config.do_register = cc->do_register;
 
@@ -114,10 +110,7 @@ int unis_init(unis_config* cc) {
 
 static int unis_make_reg_str(int interval, char *json, char **ret_json) {
   json_t *root;
-  json_t *listeners;
   json_error_t json_err;
-  char *ips;
-  int i = 0, once = 1, port = 0;
 
   root = json_loads(service_instance, 0, &json_err);
   if (!root) {
@@ -127,36 +120,6 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
   json_object_set(root, "name", json_string(config.name));
   json_object_set(root, "serviceType", json_string(config.type));
   json_object_set(root, "ttl", json_integer(config.registration_interval));
-
-  /* TODO: need to read service listeners config to get proto and port info
-     assume tcp listeners on port 5006 on all interfaces for now */
-  listeners = json_array();
-  for(i = 0; i < config.ifaces.count; ++i) {
-    json_t *entry;
-    char buf[255];
-
-    ips = config.ifaces.ip_ports[i].ip;
-    port = config.ifaces.ip_ports[i].port;
-    if (strchr(ips, ':') != NULL) {
-      continue;
-    } 
-    else if (!strcmp(ips, "127.0.0.1")) {
-      continue;
-    }
-    else {
-      if(once) {
-        snprintf(buf, sizeof(buf), "xsp://%s:%d", ips, port);
-        json_object_set(root, "accessPoint", json_string(buf));
-        once = 0;
-      }
-      /* listen on all non-loopback IPs */
-      snprintf(buf, sizeof(buf), "%s/%d", ips, port);
-      entry = json_object();
-      json_object_set(entry, "tcp", json_string(buf));
-      json_array_append_new(listeners, entry);
-    }
-  }
-  json_object_set(root, "listeners", listeners);
 
   if (json != NULL) {
     json_t *arg_root;
@@ -181,6 +144,7 @@ static void *unis_registration_thread(void *arg) {
   unis_config *cfg = (unis_config *)arg;
   curl_response *response;
   json_t *reg_json;
+  json_t *listeners;
   json_error_t json_err;
   char *url;
   char *send_str;
@@ -205,6 +169,13 @@ http://unis.incntre.iu.edu/schema/ext/xspservice/1/xspservice */
       if (sid) {
         dbg_info("\nsid=%s", sid);
         json_object_set(reg_json, "id", json_string(sid));
+      }
+
+      /* build the listeners dict on every update as interfaces might come and go
+         this call has the side-effect of setting accessPoint in the root dict */
+      listeners = __unis_get_json_listeners(reg_json);
+      if (listeners) {
+        json_object_set(reg_json, "listeners", listeners);
       }
 
       send_str = json_dumps(reg_json, JSON_COMPACT);
@@ -243,7 +214,7 @@ http://unis.incntre.iu.edu/schema/ext/xspservice/1/xspservice */
   return NULL;
 }
 
-int unis_register_start(int interval, char *json) {
+int unis_register_start(unsigned int interval, char *json) {
   return unis_make_reg_str(interval, json, &reg_str);
 }
 
@@ -344,4 +315,51 @@ int unis_get_service_access_points(char *sname, char ***ret_aps, int *num_aps) {
   free(query);
 
   return 0;
+}
+
+static json_t * __unis_get_json_listeners(json_t *root) {
+  json_t *listeners;
+  char **ips;
+  int ip_count, i, once = 1;
+
+  listeners = json_array();
+  get_all_ips(&ips, &ip_count);
+  for(i = 0; i < ip_count; i++) {
+    json_t *entry;
+    char buf[255];
+
+    if (strchr(ips[i], ':') != NULL) {
+      continue;
+    }
+    else if (!strcmp(ips[i], "127.0.0.1")) {
+      continue;
+    }
+    else {
+      if (once) {
+        char *ip;
+        if (config.iface) {
+          /* add listener entry for specified iface */
+          ip = config.iface;
+          snprintf(buf, sizeof(buf), "%s/%d", ip, config.port);
+          entry = json_object();
+          json_object_set(entry, "tcp", json_string(buf));
+          json_array_append_new(listeners, entry);
+        }
+        else {
+          ip = ips[i];
+        }
+        /* set accessPoint to be first encountered IP, or iface if set */
+        snprintf(buf, sizeof(buf), "%s://%s:%d", config.type, ip, config.port);
+        json_object_set(root, "accessPoint", json_string(buf));
+        once = 0;
+      }
+      /* listen on all non-loopback IPs */
+      snprintf(buf, sizeof(buf), "%s/%d", ips[i], config.port);
+      entry = json_object();
+      json_object_set(entry, "tcp", json_string(buf));
+      json_array_append_new(listeners, entry);
+    }
+  }
+
+  return listeners;
 }

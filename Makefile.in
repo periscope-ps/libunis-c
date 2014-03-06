@@ -99,9 +99,9 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(library_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libunis_c_la_DEPENDENCIES =
+libunis_c_la_LIBADD =
 am_libunis_c_la_OBJECTS = curl_context.lo th-lock.lo \
-	unis_registration.lo
+	unis_registration.lo compat.lo
 libunis_c_la_OBJECTS = $(am_libunis_c_la_OBJECTS)
 libunis_c_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -263,11 +263,7 @@ AUTOMAKE_OPTIONS = foreign
 lib_LTLIBRARIES = libunis-c.la
 library_includedir = $(includedir)
 library_include_HEADERS = unis_registration.h
-
-#libunis_c_a_SOURCES = curl_context.c	curl_context.h log.h  th-lock.c  th-lock.h	unis_registration.c  unis_registration.h
-#libunis_c_a_LIBADD =
-libunis_c_la_SOURCES = curl_context.c  curl_context.h log.h  th-lock.c  th-lock.h  unis_registration.c  unis_registration.h
-libunis_c_la_LIBADD = #-L/usr/local/lib -lcurl -lpthread -ljansson
+libunis_c_la_SOURCES = curl_context.c  curl_context.h log.h  th-lock.c  th-lock.h  unis_registration.c  unis_registration.h  compat.c compat.h
 libunis_c_la_LDFLAGS = -export-dynamic
 AM_CFLAGS = -fPIC
 ACLOCAL_AMFLAGS = -I m4
@@ -351,6 +347,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/compat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/curl_context.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/th-lock.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unis_registration.Plo@am__quote@
