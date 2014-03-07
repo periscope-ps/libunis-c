@@ -48,6 +48,11 @@ int unis_init(unis_config* cc) {
     return -1;
   }
 
+  if (cc->protocol_name == NULL || !(config.protocol_name = strndup(cc->protocol_name, strlen(cc->protocol_name)))) {
+    dbg_info("No UNIS protocol name specified!");
+    return -1;
+  }
+
   if (cc->iface == NULL || !(config.iface = strndup(cc->iface, strlen(cc->iface)))) {
     dbg_info("No interfaces are specified");
     return -1;
@@ -349,7 +354,7 @@ static json_t * __unis_get_json_listeners(json_t *root) {
           ip = ips[i];
         }
         /* set accessPoint to be first encountered IP, or iface if set */
-        snprintf(buf, sizeof(buf), "%s://%s:%d", config.type, ip, config.port);
+        snprintf(buf, sizeof(buf), "%s://%s:%d", config.protocol_name, ip, config.port);
         json_object_set(root, "accessPoint", json_string(buf));
         once = 0;
       }

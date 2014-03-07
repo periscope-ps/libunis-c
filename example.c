@@ -10,9 +10,10 @@ int main()
   unis_config config = {
     .name = "Ibp Server",
     .type = "ibp_server",
-    .endpoint = "http://198.129.50.8:8888",
+    .endpoint = "http://monitor.incntre.iu.edu:9000",
+    .protocol_name = "ibp",
     .iface = "10.103.0.11",
-    .port = 5006,
+    .port = 6714,
     .do_register = 1,
     .registration_interval = 5,
     .refresh_timer = UNIS_REFRESH_TO

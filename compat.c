@@ -59,6 +59,31 @@
 #include <grp.h>
 #include <pwd.h>
 
+int _strlist_add(const char *str, char ***list, int *list_length) {
+  char **new_list;
+  char *new_str;
+
+  new_str = strdup(str);
+  if (!new_str)
+    goto error_exit;
+
+  new_list = realloc(*list, sizeof(char *) * (*list_length + 1));
+  if (new_list == NULL)
+    goto error_exit2;
+
+  new_list[*list_length] = new_str;
+
+  *list = new_list;
+  *list_length = *list_length + 1;
+
+  return 0;
+
+error_exit2:
+  free(new_str);
+error_exit:
+  return -1;
+}
+
 int get_all_ips(char ***ret_ips, int *ret_ip_count) {
 	struct ifaddrs *ifaces, *curr;
 	char **ips;
@@ -91,7 +116,7 @@ int get_all_ips(char ***ret_ips, int *ret_ip_count) {
 			continue;
 		}
 
-		if (strlist_add(ip, &ips, &ip_count) != 0) {
+		if (_strlist_add(ip, &ips, &ip_count) != 0) {
 			continue;
 		}
 	}

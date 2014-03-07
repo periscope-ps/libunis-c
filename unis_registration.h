@@ -8,7 +8,8 @@ typedef struct unis_config_t {
 	char *name;
 	char *type;
 	char *endpoint;
-  char* iface;
+  char *iface;
+  char *protocol_name;
   unsigned int port;
   unsigned int do_register;
 	unsigned int registration_interval;
