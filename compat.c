@@ -126,3 +126,10 @@ int get_all_ips(char ***ret_ips, int *ret_ip_count) {
 
 	return 0;
 }
+
+char* Strdup(const char* source) {
+  if(source != NULL)
+    return strdup(source);
+  else
+    return NULL;
+}

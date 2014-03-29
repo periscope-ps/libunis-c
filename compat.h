@@ -30,4 +30,5 @@
 #define FALSE 0
 
 int get_all_ips(char ***ret_ips, int *ret_ip_count);
+char* Strdup(const char* source);
 #endif

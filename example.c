@@ -10,17 +10,22 @@ int main()
   unis_config config = {
     .name = "Ibp Server",
     .type = "ibp_server",
-    .endpoint = "http://monitor.incntre.iu.edu:9000",
+    .endpoint = "https://localhost:8888",
     .protocol_name = "ibp",
-    .iface = "10.103.0.11",
+    .iface = "10.103.0.59",
     .port = 6714,
     .do_register = 1,
     .registration_interval = 5,
-    .refresh_timer = UNIS_REFRESH_TO
+    .refresh_timer = UNIS_REFRESH_TO,
+    .use_ssl = 1,
+    .certfile = "ssl/client.crt",
+    .keyfile  = "ssl/client.key",
+    .keypass  = "",
+    .cacerts  = ""
   };
 
   if(unis_init(&config) == 0) {
-    printf("success");
+    printf("Success\n");
   }
 
   sleep(5);

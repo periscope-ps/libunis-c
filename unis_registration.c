@@ -77,7 +77,14 @@ int unis_init(unis_config* cc) {
   /* we could also start a thread that retrieves and caches everything from UNIS
      for now, every call to the UNIS module will do an active query against the service */
   context.url = config.endpoint;
-  context.use_ssl = 0;
+
+  context.use_ssl = cc->use_ssl;
+
+  // copy paths into context
+  context.certfile = Strdup(cc->certfile);
+  context.keyfile = Strdup(cc->keyfile);
+  context.keypass = Strdup(cc->keypass);
+  context.cacerts = Strdup(cc->cacerts);
   context.curl_persist = 0;
 
   if (init_curl(&context, 0) != 0) {
@@ -86,7 +93,7 @@ int unis_init(unis_config* cc) {
   }
 
   /* do registration at init time
-   *      otherwise, we app must call xsp_unis_register() */
+   *      otherwise, we app must call unis_register() */
   if (config.do_register) {
     unis_make_reg_str(config.registration_interval, NULL, &reg_str);
 
@@ -119,7 +126,7 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
 
   root = json_loads(service_instance, 0, &json_err);
   if (!root) {
-    dbg_info("Could not decode XSP service string: %d: %s", json_err.line, json_err.text);
+    dbg_info("Could not decode service string: %d: %s", json_err.line, json_err.text);
   }
 
   json_object_set(root, "name", json_string(config.name));
@@ -162,8 +169,6 @@ static void *unis_registration_thread(void *arg) {
     if (reg_str != NULL) {
       reg_json = json_loads(reg_str, 0, &json_err);
       if (!reg_json) {
-        /* we should validate the reg_str against the XSP Service schema
-http://unis.incntre.iu.edu/schema/ext/xspservice/1/xspservice */
         dbg_info("Could not decode registration string: %d: %s\n",
             json_err.line, json_err.text);
         continue;

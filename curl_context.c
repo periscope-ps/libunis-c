@@ -11,6 +11,8 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist *headers, i
 static void __init_curl_ssl(CURL *cc, long flags);
 static size_t read_cb(void *ptr, size_t size, size_t nmemb, void *userp);
 static size_t write_cb(void *ptr, size_t size, size_t nmemb, void *userp);
+static void __set_curl_ssl_certificates(CURL *curl, char *capath, char *client_cert_path,
+       char *client_cert_pass, char *client_keyname);
 
 int init_curl(curl_context *cc, long flags) {
 	long cflags = CURL_GLOBAL_DEFAULT;
@@ -33,6 +35,7 @@ int init_curl(curl_context *cc, long flags) {
 		}
 		if (cc->use_ssl) {
 			__init_curl_ssl(cc->curl, 0);
+      __set_curl_ssl_certificates(cc->curl, cc->cacerts, cc->certfile, cc->keypass, cc->keyfile);
 		}
 	}
 
@@ -49,6 +52,23 @@ static void __init_curl_ssl(CURL *curl, long flags) {
 	// skip server verification
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+}
+
+static void __set_curl_ssl_certificates(CURL *curl, char *server_ca_cert_path, char *client_cert_path,
+       char *client_cert_pass, char *client_keyname) {
+  // you can set this to anything because we have turned off verifypeer
+  if (server_ca_cert_path != NULL)
+    curl_easy_setopt(curl, CURLOPT_CAINFO, server_ca_cert_path);
+  if (client_cert_path != NULL)
+    curl_easy_setopt(curl,CURLOPT_SSLCERT, client_cert_path);
+  if (client_cert_pass != NULL)
+    curl_easy_setopt(curl,CURLOPT_KEYPASSWD, client_cert_pass);
+  if (client_keyname != NULL)
+    curl_easy_setopt(curl,CURLOPT_SSLKEY, client_keyname);
+
+  curl_easy_setopt(curl,CURLOPT_SSLKEYTYPE, "PEM");
+  curl_easy_setopt(curl,CURLOPT_SSLCERTTYPE,"PEM");
+
 }
 
 int copy_curl_context(curl_context *src, curl_context *dst) {
@@ -160,6 +180,7 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist* headers, i
 		}
 		if (cc->use_ssl) {
 			__init_curl_ssl(curl, 0);
+      __set_curl_ssl_certificates(curl, cc->cacerts, cc->certfile, cc->keypass, cc->keyfile);
 		}
 	}
 	
