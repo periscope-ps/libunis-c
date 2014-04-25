@@ -22,4 +22,16 @@ make
 make install
 ```
 
-To build debug mode compile with -DDEBUG.
+Run Example
+-------------------------------------------------------------------------------
+Make sure correct unis is being pointed and correct ssl settings are being used.
+```
+./build_example.sh
+./example
+```
+
+Usage
+-------------------------------------------------------------------------------
+Take a look at example.c
+
+

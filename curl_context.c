@@ -1,5 +1,5 @@
 #include "curl_context.h"
-#include "log.h"
+#include "libunis_c_log.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -19,7 +19,7 @@ int init_curl(curl_context *cc, long flags) {
 
 	// FIXME: this will be in conflict with soap_context
 	if (CRYPTO_thread_setup()) {
-		dbg_info("Couldn't setup SSL threads\n");
+		dbg_info(ERROR, "Couldn't setup SSL threads\n");
 		return -1;
 	}
 
@@ -30,7 +30,7 @@ int init_curl(curl_context *cc, long flags) {
 	if (cc->curl_persist) {
 		cc->curl = curl_easy_init();
 		if (!cc->curl) {
-			dbg_info("Could not intialize CURL\n");
+			dbg_info(ERROR, "Could not intialize CURL\n");
 			return -1;
 		}
 		if (cc->use_ssl) {
@@ -175,7 +175,7 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist* headers, i
 	} else {
 		curl = curl_easy_init();
 		if (!curl) {
-			dbg_info("Could not initialize CURL\n");
+			dbg_info(ERROR, "Could not initialize CURL\n");
 			goto error_exit;
 		}
 		if (cc->use_ssl) {
@@ -216,7 +216,7 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist* headers, i
 
 	res = curl_easy_perform(curl);
 	if (res != CURLE_OK) {
-		dbg_info("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+		dbg_info(ERROR, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 		goto error_exit;
 	}
 

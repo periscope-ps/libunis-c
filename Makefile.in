@@ -100,7 +100,7 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(library_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libunis_c_la_LIBADD =
-am_libunis_c_la_OBJECTS = curl_context.lo th-lock.lo \
+am_libunis_c_la_OBJECTS = curl_context.lo libunis_c_log.lo th-lock.lo \
 	unis_registration.lo compat.lo
 libunis_c_la_OBJECTS = $(am_libunis_c_la_OBJECTS)
 libunis_c_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -258,12 +258,10 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
-
-#lib_LIBRARIES = libunis-c.a
 lib_LTLIBRARIES = libunis-c.la
+library_include_HEADERS = unis_registration.h libunis_c_log.h
 library_includedir = $(includedir)
-library_include_HEADERS = unis_registration.h
-libunis_c_la_SOURCES = curl_context.c  curl_context.h log.h  th-lock.c  th-lock.h  unis_registration.c  unis_registration.h  compat.c compat.h
+libunis_c_la_SOURCES = curl_context.c curl_context.h libunis_c_log.h libunis_c_log.c th-lock.c th-lock.h unis_registration.c unis_registration.h compat.c compat.h
 libunis_c_la_LDFLAGS = -export-dynamic
 AM_CFLAGS = -fPIC
 ACLOCAL_AMFLAGS = -I m4
@@ -349,6 +347,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/compat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/curl_context.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libunis_c_log.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/th-lock.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unis_registration.Plo@am__quote@
 

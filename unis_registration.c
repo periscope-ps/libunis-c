@@ -10,7 +10,7 @@
 
 #include "curl_context.h"
 #include "unis_registration.h"
-#include "log.h"
+#include "libunis_c_log.h"
 #include "compat.h"
 
 static unis_config config;
@@ -34,27 +34,27 @@ static json_t * __unis_get_json_listeners();
 int unis_init(unis_config* cc) {
 
   if (cc->name == NULL || !(config.name = strndup(cc->name, strlen(cc->name)))) {
-    dbg_info("No UNIS registration name specified!");
+    dbg_info(ERROR, "No UNIS registration name specified!");
     return -1;
   }
 
   if (cc->type == NULL || !(config.type = strndup(cc->type, strlen(cc->type)))) {
-    dbg_info("No UNIS service type specified!");
+    dbg_info(ERROR, "No UNIS service type specified!");
     return -1;
   }
 
   if (cc->endpoint == NULL || !(config.endpoint = strndup(cc->endpoint, strlen(cc->endpoint)))) {
-    dbg_info("No UNIS endpoint specified!");
+    dbg_info(ERROR, "No UNIS endpoint specified!");
     return -1;
   }
 
   if (cc->protocol_name == NULL || !(config.protocol_name = strndup(cc->protocol_name, strlen(cc->protocol_name)))) {
-    dbg_info("No UNIS protocol name specified!");
+    dbg_info(ERROR, "No UNIS protocol name specified!");
     return -1;
   }
 
   if (cc->iface == NULL || !(config.iface = strndup(cc->iface, strlen(cc->iface)))) {
-    dbg_info("No interfaces are specified");
+    dbg_info(ERROR, "No interfaces are specified");
     return -1;
   }
 
@@ -64,13 +64,13 @@ int unis_init(unis_config* cc) {
 
   config.refresh_timer = cc->refresh_timer;
   if (config.refresh_timer == UNIS_REFRESH_TO || config.refresh_timer <= 0) {
-    dbg_info("Refresh time not specified, using default %d\n", UNIS_REFRESH_TO);
+    dbg_info(WARN, "Refresh time not specified, using default %d\n", UNIS_REFRESH_TO);
     config.refresh_timer = UNIS_REFRESH_TO;
   }
 
   config.registration_interval = cc->registration_interval;
   if (config.registration_interval == UNIS_REG_INTERVAL || config.registration_interval <= 0) {
-    dbg_info("Registration interval not specified, using default %d\n", UNIS_REG_INTERVAL);
+    dbg_info(WARN, "Registration interval not specified, using default %d\n", UNIS_REG_INTERVAL);
     config.registration_interval = UNIS_REG_INTERVAL;
   }
 
@@ -88,7 +88,7 @@ int unis_init(unis_config* cc) {
   context.curl_persist = 0;
 
   if (init_curl(&context, 0) != 0) {
-    dbg_info("Could not start CURL context\n");
+    dbg_info(ERROR, "Could not start CURL context\n");
     return -1;
   }
 
@@ -100,18 +100,18 @@ int unis_init(unis_config* cc) {
     /* start the registration thread */
     pthread_attr_t attr;
     if(pthread_attr_init(&attr) != 0) {
-      dbg_info("can not pthread_attr_init\n");
+      dbg_info(ERROR, "can not pthread_attr_init\n");
       return -1;
     }
     if(pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED) != 0) {
-      dbg_info("pthread_attr_setdetachstate failed\n");
+      dbg_info(ERROR, "pthread_attr_setdetachstate failed\n");
       return -1;
     }
     if (pthread_create(&thread, &attr, unis_registration_thread, &config) != 0) {
-      dbg_info("Could not start UNIS registration thread\n");
+      dbg_info(ERROR, "Could not start UNIS registration thread\n");
       return -1;
     } else {
-      dbg_info("Started thread\n");
+      dbg_info(DEBUG, "Started thread\n");
     }
 
   }
@@ -126,7 +126,7 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
 
   root = json_loads(service_instance, 0, &json_err);
   if (!root) {
-    dbg_info("Could not decode service string: %d: %s", json_err.line, json_err.text);
+    dbg_info(ERROR, "Could not decode service string: %d: %s", json_err.line, json_err.text);
   }
 
   json_object_set(root, "name", json_string(config.name));
@@ -137,21 +137,23 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
     json_t *arg_root;
     arg_root = json_loads(json, 0, &json_err);
     if (!arg_root) {
-      dbg_info("Could not decode JSON paramater: %d: %s", json_err.line, json_err.text);
+      dbg_info(ERROR, "Could not decode JSON paramater: %d: %s", json_err.line, json_err.text);
     }
     else {
       /* TODO: merge passed-in JSON with defaults */
     }
   }
 
-  //dbg_info("%s\n", json_dumps(root, JSON_INDENT(2)));
+  //dbg_info(DEBUG, "%s\n", json_dumps(root, JSON_INDENT(2)));
   *ret_json = json_dumps(root, JSON_COMPACT);
 
   return 0;
 }
 
+//FIX ME: if service is not up when thread has started then somehow
+// subsequent call fails
 static void *unis_registration_thread(void *arg) {
-  dbg_info("in unis_registration_thread\n");
+  dbg_info(DEBUG, "in unis_registration_thread\n");
   struct timeval now;
   unis_config *cfg = (unis_config *)arg;
   curl_response *response;
@@ -165,11 +167,11 @@ static void *unis_registration_thread(void *arg) {
   asprintf(&url, "%s/%s", cfg->endpoint, "services");
 
   while (1) {
-    dbg_info("in while loop\n");
+    dbg_info(DEBUG, "in while loop\n");
     if (reg_str != NULL) {
       reg_json = json_loads(reg_str, 0, &json_err);
       if (!reg_json) {
-        dbg_info("Could not decode registration string: %d: %s\n",
+        dbg_info(ERROR, "Could not decode registration string: %d: %s\n",
             json_err.line, json_err.text);
         continue;
       }
@@ -177,7 +179,7 @@ static void *unis_registration_thread(void *arg) {
       gettimeofday(&now, NULL);
       json_object_set(reg_json, "ts", json_integer(now.tv_sec*1e6 + now.tv_usec));
       if (sid) {
-        dbg_info("\nsid=%s", sid);
+        dbg_info(DEBUG, "\nsid=%s", sid);
         json_object_set(reg_json, "id", json_string(sid));
       }
 
@@ -197,7 +199,7 @@ static void *unis_registration_thread(void *arg) {
           &response);
 
       if (response && (response->status != 201)) {
-        dbg_info("Error registering to UNIS: %s", response->data);
+        dbg_info(ERROR, "Error registering to UNIS: %s", response->data);
       }
       /* first time we register, save ID for future updates */
       else if (response && response->data && !sid) {
@@ -205,7 +207,7 @@ static void *unis_registration_thread(void *arg) {
         json_t *key;
         resp = json_loads(response->data, 0, &json_err);
         if (!resp) {
-          dbg_info("Could not decode registration response! %d: %s",
+          dbg_info(ERROR, "Could not decode registration response! %d: %s",
               json_err.line, json_err.text);
           continue;
         }
@@ -240,14 +242,14 @@ int unis_query(char *url, char *query, char **ret_str) {
   int ret = 0;
 
   asprintf(&qstr, "%s/%s", url, query);
-  dbg_info("\nQuery: %s\n", qstr);
+  dbg_info(DEBUG, "\nQuery: %s\n", qstr);
 
   curl_get_json_string(&context,
       qstr,
       &response);
 
   if (response && (response->status != 200)) {
-    dbg_info("Error querying UNIS: %lu: %s", response->status, response->data);
+    dbg_info(ERROR, "Error querying UNIS: %lu: %s", response->status, response->data);
     ret = -1;
     *ret_str = NULL;
     goto exit;
@@ -283,7 +285,7 @@ int unis_get_service_access_points(char *sname, char ***ret_aps, int *num_aps) {
   if (ret_str) {
     json_ret = json_loads(ret_str, 0, &json_err);
     if (!json_ret) {
-      dbg_info("Could not decode response: %d: %s", json_err.line, json_err.text);
+      dbg_info(ERROR, "Could not decode response: %d: %s", json_err.line, json_err.text);
       return -1;
     }
   }

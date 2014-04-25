@@ -2,6 +2,11 @@
 #include <stdio.h>
 
 #include "unis_registration.h"
+#include "libunis_c_log.h"
+
+void external_function_call(int level, const char* msg) {
+    printf("LOG: %d, %s\n", level, msg);
+}
 
 int main()
 {
@@ -23,6 +28,8 @@ int main()
     .keypass  = "",
     .cacerts  = ""
   };
+
+  register_log_callback_libunis_c(external_function_call);
 
   if(unis_init(&config) == 0) {
     printf("Success\n");
