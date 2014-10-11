@@ -15,18 +15,24 @@ int main()
   unis_config config = {
     .name = "Ibp Server",
     .type = "ibp_server",
-    .endpoint = "https://localhost:8888",
+    .endpoint = "http://localhost:8888",
     .protocol_name = "ibp",
     .iface = "10.103.0.59",
     .port = 6714,
     .do_register = 1,
     .registration_interval = 5,
     .refresh_timer = UNIS_REFRESH_TO,
-    .use_ssl = 1,
+    .use_ssl = 0,
     .certfile = "ssl/client.crt",
     .keyfile  = "ssl/client.key",
     .keypass  = "",
-    .cacerts  = ""
+    .cacerts  = "",
+    .loc_info = {
+      .country = "US",
+      .zipcode = "18031",
+      .lat = -31.3423,
+      .lon = 121.1231
+    }
   };
 
   register_log_callback_libunis_c(external_function_call);

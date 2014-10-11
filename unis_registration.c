@@ -58,8 +58,8 @@ int unis_init(unis_config* cc) {
     return -1;
   }
 
+  memcpy(&config.loc_info, &cc->loc_info, sizeof(cc->loc_info));
   config.port = cc->port;
-
   config.do_register = cc->do_register;
 
   config.refresh_timer = cc->refresh_timer;
@@ -122,6 +122,7 @@ int unis_init(unis_config* cc) {
 
 static int unis_make_reg_str(int interval, char *json, char **ret_json) {
   json_t *root;
+  json_t *location;
   json_error_t json_err;
 
   root = json_loads(service_instance, 0, &json_err);
@@ -132,6 +133,17 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
   json_object_set(root, "name", json_string(config.name));
   json_object_set(root, "serviceType", json_string(config.type));
   json_object_set(root, "ttl", json_integer(config.registration_interval));
+
+  location = json_object();
+  json_object_set(location, "country", json_string(config.loc_info.country));
+  json_object_set(location, "street_address", json_string(config.loc_info.street_address));
+  json_object_set(location, "state", json_string(config.loc_info.state));
+  json_object_set(location, "institution", json_string(config.loc_info.institution));
+  json_object_set(location, "zipcode", json_string(config.loc_info.zipcode));
+  json_object_set(location, "lat", json_real(config.loc_info.lat));
+  json_object_set(location, "lon", json_real(config.loc_info.lon));
+
+  json_object_set(root, "location", location);
 
   if (json != NULL) {
     json_t *arg_root;

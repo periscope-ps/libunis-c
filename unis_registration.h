@@ -4,16 +4,27 @@
 #define UNIS_REFRESH_TO   60
 #define UNIS_REG_INTERVAL 720
 
+typedef struct unis_loc_t {
+  char   *country;
+  char   *street_address;
+  char   *state;
+  char   *institution;
+  char   *zipcode;
+  float   lat;
+  float   lon;
+} unis_loc;
+
 typedef struct unis_config_t {
-	char *name;
-	char *type;
-	char *endpoint;
+  unis_loc loc_info;
+  char *name;
+  char *type;
+  char *endpoint;
   char *iface;
   char *protocol_name;
   unsigned int port;
   unsigned int do_register;
-	unsigned int registration_interval;
-	unsigned int refresh_timer;
+  unsigned int registration_interval;
+  unsigned int refresh_timer;
   int  use_ssl;     /**< integer 1 or 0 to use ssl */
   char *certfile;   /**< char pointer to certfile */
   char *keyfile;    /**< char pointer to keyfile */
