@@ -136,12 +136,12 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
 
   location = json_object();
   json_object_set(location, "country", json_string(config.loc_info.country));
-  json_object_set(location, "street_address", json_string(config.loc_info.street_address));
+  json_object_set(location, "streetAddress", json_string(config.loc_info.street_address));
   json_object_set(location, "state", json_string(config.loc_info.state));
   json_object_set(location, "institution", json_string(config.loc_info.institution));
   json_object_set(location, "zipcode", json_string(config.loc_info.zipcode));
-  json_object_set(location, "lat", json_real(config.loc_info.lat));
-  json_object_set(location, "lon", json_real(config.loc_info.lon));
+  json_object_set(location, "latitude", json_real(config.loc_info.lat));
+  json_object_set(location, "longitude", json_real(config.loc_info.lon));
 
   json_object_set(root, "location", location);
 
