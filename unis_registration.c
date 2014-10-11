@@ -135,11 +135,16 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
   json_object_set(root, "ttl", json_integer(config.registration_interval));
 
   location = json_object();
-  json_object_set(location, "country", json_string(config.loc_info.country));
-  json_object_set(location, "streetAddress", json_string(config.loc_info.street_address));
-  json_object_set(location, "state", json_string(config.loc_info.state));
-  json_object_set(location, "institution", json_string(config.loc_info.institution));
-  json_object_set(location, "zipcode", json_string(config.loc_info.zipcode));
+  if (config.loc_info.country && strlen(config.loc_info.country))
+    json_object_set(location, "country", json_string(config.loc_info.country));
+  if (config.loc_info.street_address && strlen(config.loc_info.street_address))
+    json_object_set(location, "streetAddress", json_string(config.loc_info.street_address));
+  if (config.loc_info.state && strlen(config.loc_info.state))
+    json_object_set(location, "state", json_string(config.loc_info.state));
+  if (config.loc_info.institution && strlen(config.loc_info.institution))
+    json_object_set(location, "institution", json_string(config.loc_info.institution));
+  if (config.loc_info.zipcode && strlen(config.loc_info.zipcode))
+    json_object_set(location, "zipcode", json_string(config.loc_info.zipcode));
   json_object_set(location, "latitude", json_real(config.loc_info.lat));
   json_object_set(location, "longitude", json_real(config.loc_info.lon));
 
