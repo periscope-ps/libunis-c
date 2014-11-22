@@ -15,7 +15,7 @@ int main()
   unis_config config = {
     .name = "Ibp Server",
     .type = "ibp_server",
-    .endpoint = "http://localhost:8888",
+    .endpoint = "http://monitor.incntre.iu.edu:9000",
     .protocol_name = "ibp",
     .iface = "10.103.0.59",
     .port = 6714,

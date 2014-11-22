@@ -167,6 +167,33 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
   return 0;
 }
 
+
+void unis_register_files(json_t *reg_json){
+  char *url;
+  char *send_str;
+  curl_response *response;
+
+  dbg_info(DEBUG, "Registering files wih UNIS\n");
+
+  /*set the url*/
+  asprintf(&url, "%s/%s", config.endpoint, config.type );
+
+  /*post the data*/
+  send_str = json_dumps(reg_json, JSON_COMPACT);
+  curl_post_json_string(&context,
+			url,
+			send_str,
+			&response);
+
+  /*error handling*/
+  if (response && (response->status != 201)) {
+    dbg_info(ERROR, "Error registering to UNIS: %s", response->data);
+  }
+  else if (response) {
+    free_curl_response(response);
+  }
+}
+
 //FIX ME: if service is not up when thread has started then somehow
 // subsequent call fails
 static void *unis_registration_thread(void *arg) {
@@ -189,7 +216,7 @@ static void *unis_registration_thread(void *arg) {
       reg_json = json_loads(reg_str, 0, &json_err);
       if (!reg_json) {
         dbg_info(ERROR, "Could not decode registration string: %d: %s\n",
-            json_err.line, json_err.text);
+		 json_err.line, json_err.text);
         continue;
       }
 
@@ -211,9 +238,9 @@ static void *unis_registration_thread(void *arg) {
 
       /* with valid json, register to UNIS endpoint */
       curl_post_json_string(&context,
-          url,
-          send_str,
-          &response);
+			    url,
+			    send_str,
+			    &response);
 
       if (response && (response->status != 201)) {
         dbg_info(ERROR, "Error registering to UNIS: %s", response->data);
@@ -225,8 +252,8 @@ static void *unis_registration_thread(void *arg) {
         resp = json_loads(response->data, 0, &json_err);
         if (!resp) {
           dbg_info(ERROR, "Could not decode registration response! %d: %s",
-              json_err.line, json_err.text);
-          continue;
+		   json_err.line, json_err.text);
+	  return;
         }
         key = json_object_get(resp, "id");
         if (key) {
@@ -262,8 +289,8 @@ int unis_query(char *url, char *query, char **ret_str) {
   dbg_info(DEBUG, "\nQuery: %s\n", qstr);
 
   curl_get_json_string(&context,
-      qstr,
-      &response);
+		       qstr,
+		       &response);
 
   if (response && (response->status != 200)) {
     dbg_info(ERROR, "Error querying UNIS: %lu: %s", response->status, response->data);
@@ -277,7 +304,7 @@ int unis_query(char *url, char *query, char **ret_str) {
     strncpy(*ret_str, response->data, strlen(response->data));
   }
 
-exit:
+ exit:
   free(qstr);
   if (response)
     free_curl_response(response);
@@ -379,8 +406,8 @@ static json_t * __unis_get_json_listeners(json_t *root) {
         }
         /* set accessPoint to be first encountered IP, or iface if set */
         snprintf(buf, sizeof(buf), "%s://%s:%d", config.protocol_name, ip, config.port);
-        json_object_set(root, "accessPoint", json_string(buf));
-        once = 0;
+	  json_object_set(root, "accessPoint", json_string(buf));
+	  once = 0;
       }
       /* listen on all non-loopback IPs */
       snprintf(buf, sizeof(buf), "%s/%d", ips[i], config.port);

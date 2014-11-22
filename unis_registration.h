@@ -4,6 +4,8 @@
 #define UNIS_REFRESH_TO   60
 #define UNIS_REG_INTERVAL 720
 
+#include <jansson.h>
+
 typedef struct unis_loc_t {
   char   *country;
   char   *street_address;
@@ -38,6 +40,9 @@ typedef struct unis_config_t {
    should be called to set unis server settings
 */
 int unis_init(unis_config* cc);
+
+// Register files with UNIS 
+void unis_register_files(json_t *reg_json);
 
 /* 
    first param is the service name we're looking for
