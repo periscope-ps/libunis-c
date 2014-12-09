@@ -47,43 +47,53 @@ void external_function_call(int level, const char* msg) {
 int main()
 {
 
-  json_t *root;
-  json_error_t json_err;
+    json_t *json_ret;
+    json_error_t json_err;
+    char *str;
+    char *opt_str;
 
-  unis_config config = {
-    .name = "RDMA",
-    .type = "files",
-    .endpoint = "http://monitor.incntre.iu.edu:9000",
-    .protocol_name = "files",
-    .iface = "127.0.0.1",
-    .port = 0,
-    .do_register = 0,
-    .registration_interval = 5,
-    .refresh_timer = UNIS_REFRESH_TO,
-    .use_ssl = 0,
-    .certfile = "ssl/client.crt",
-    .keyfile  = "ssl/client.key",
-    .keypass  = "",
-    .cacerts  = "",
-    .loc_info = {
-      .country = "US",
-      .zipcode = "18031",
-      .lat = -31.3423,
-      .lon = 121.1231
+    unis_config config = {
+	.name = "RDMA",
+	.type = "",
+	.endpoint = "http://monitor.incntre.iu.edu:9000",
+	.protocol_name = "",
+	.iface = "127.0.0.1",
+	.port = 0,
+	.do_register = 0,
+	.registration_interval = 5,
+	.refresh_timer = UNIS_REFRESH_TO,
+	.use_ssl = 0,
+	.certfile = "ssl/client.crt",
+	.keyfile  = "ssl/client.key",
+	.keypass  = "",
+	.cacerts  = "",
+	.loc_info = {
+	    .country = "US",
+	    .zipcode = "18031",
+	    .lat = -31.3423,
+	    .lon = 121.1231
+	}
+    };
+
+    register_log_callback_libunis_c(external_function_call);
+
+    if(unis_init(&config) == 0) {
+	printf("Success\n");
     }
-  };
 
-  register_log_callback_libunis_c(external_function_call);
+    unis_get_file_extents("mpi.tar.gz",&str);
 
-  if(unis_init(&config) == 0) {
-    printf("Success\n");
-  }
+    json_ret = json_loads(str, 0, &json_err);
+    if (!json_ret) {
+	printf("Could not decode response: %d: %s\n", json_err.line, json_err.text);
+	printf("Error response : %s\n", str);
+	return 1;
+    }
 
-  root = json_loads(file, 0, &json_err);
-
-
-  unis_register_files(root);
-
-
-  return 0;
+    opt_str = json_dumps(json_ret, JSON_INDENT(2));
+    if(opt_str != NULL){
+	printf("Json dump :\n %s", opt_str);
+    }
+    
+    return 0;
 }

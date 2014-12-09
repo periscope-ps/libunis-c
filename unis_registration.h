@@ -41,9 +41,6 @@ typedef struct unis_config_t {
 */
 int unis_init(unis_config* cc);
 
-// Register files with UNIS 
-void unis_register_files(json_t *reg_json);
-
 /* 
    first param is the service name we're looking for
    sets a list of service access points for the caller
@@ -55,5 +52,11 @@ int unis_register_start(unsigned int interval, char *json);
 
 /* app can also stop registration */
 int unis_register_stop();
+
+/* Register files with UNIS  */
+//void unis_register_file(json_t *reg_json);
+
+/* Get file extents */
+void unis_get_exnode(char *filename, char** json_dict);
 
 #endif
