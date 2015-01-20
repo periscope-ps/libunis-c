@@ -17,14 +17,15 @@ static void __set_curl_ssl_certificates(CURL *curl, char *capath, char *client_c
 int init_curl(curl_context *cc, long flags) {
 	long cflags = CURL_GLOBAL_DEFAULT;
 
-	// FIXME: this will be in conflict with soap_context
-	if (CRYPTO_thread_setup()) {
-		dbg_info(ERROR, "Couldn't setup SSL threads\n");
-		return -1;
+	if (cc->use_ssl) {
+	        if (CRYPTO_thread_setup()) {
+	               dbg_info(ERROR, "Couldn't setup SSL threads\n");
+	               return -1;
+	        }
 	}
-
+	
 	if (flags) {
-		cflags = flags;
+	        cflags = flags;
 	}
 	
 	if (cc->curl_persist) {
@@ -35,7 +36,7 @@ int init_curl(curl_context *cc, long flags) {
 		}
 		if (cc->use_ssl) {
 			__init_curl_ssl(cc->curl, 0);
-      __set_curl_ssl_certificates(cc->curl, cc->cacerts, cc->certfile, cc->keypass, cc->keyfile);
+			__set_curl_ssl_certificates(cc->curl, cc->cacerts, cc->certfile, cc->keypass, cc->keyfile);
 		}
 	}
 
@@ -180,7 +181,7 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist* headers, i
 		}
 		if (cc->use_ssl) {
 			__init_curl_ssl(curl, 0);
-      __set_curl_ssl_certificates(curl, cc->cacerts, cc->certfile, cc->keypass, cc->keyfile);
+			__set_curl_ssl_certificates(curl, cc->cacerts, cc->certfile, cc->keypass, cc->keyfile);
 		}
 	}
 	
