@@ -53,10 +53,5 @@ int unis_register_start(unsigned int interval, char *json);
 /* app can also stop registration */
 int unis_register_stop();
 
-/* Register files with UNIS  */
-//void unis_register_file(json_t *reg_json);
-
-/* Get file extents */
-void unis_get_exnode(char *filename, char** json_dict);
 
 #endif

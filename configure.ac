@@ -65,7 +65,5 @@ else
    fi
 fi
 
-
-
 AC_CONFIG_FILES([Makefile src/Makefile include/Makefile libunis-c.pc])
 AC_OUTPUT

@@ -12440,8 +12440,6 @@ $as_echo "no" >&6; }
    fi
 fi
 
-
-
 ac_config_files="$ac_config_files Makefile src/Makefile include/Makefile libunis-c.pc"
 
 cat >confcache <<\_ACEOF

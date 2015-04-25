@@ -8,10 +8,10 @@
 #include <jansson.h>
 #include <pthread.h>
 
-#include "curl_context.h"
-#include "unis_registration.h"
-#include "libunis_c_log.h"
-#include "compat.h"
+#include <curl_context.h>
+#include <unis_registration.h>
+#include <libunis_c_log.h>
+#include <compat.h>
 
 static unis_config config;
 static curl_context context;
@@ -198,50 +198,6 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
     return 0;
 }
 
-void unis_register_exnode(json_t *reg_json){
-    char *url;
-    char *send_str;
-    curl_response *response;
-
-    dbg_info(DEBUG, "Registering files wih UNIS\n");
-
-    /*set the url*/
-    asprintf(&url, "%s/%s", config.endpoint,"files");
-
-    /*post the data*/
-    send_str = json_dumps(reg_json, JSON_COMPACT);
-    curl_post_json_string(&context,
-						  url,
-						  send_str,
-						  &response);
-
-    /*error handling*/
-    if (response && (response->status != 201)) {
-		dbg_info(ERROR, "Error registering to UNIS: %s", response->data);
-    }
-    else if (response) {
-		free_curl_response(response);
-    }
-}
-
-void unis_get_exnode(char *filename, char** json_dict){
-    char *query;
-        
-    if(filename == NULL){
-		dbg_info(ERROR, "Invalid filename");
-		return;
-    }
-    
-    dbg_info(DEBUG, "Retrieving file extents from unis\n");
-
-    asprintf(&query, "%s%s", "files?name=",filename);
-
-    unis_query(context.url, query, json_dict);
-    
-    dbg_info(DEBUG, "opt : %s \n", *json_dict);
-
-    free(query);
-}
 
 //FIX ME: if service is not up when thread has started then somehow
 // subsequent call fails
@@ -437,4 +393,60 @@ static json_t * __unis_get_json_listeners(json_t *root) {
     }
 
     return listeners;
+}
+
+
+/* unis_register_exnode : Post Exnode JSON to UNIS
+ * reg_json             : libjansson variable abstracting JSON to POST
+ * ret_json          : JSON response from POST
+ * 
+ */
+void unis_register_exnode(json_t *reg_json, char **ret_json){
+    char *url;
+    char *send_str;
+    curl_response *response;
+	*ret_json = NULL;
+
+    dbg_info(DEBUG, "Registering files wih UNIS\n");
+
+    /*set the url*/
+    asprintf(&url, "%s/%s", config.endpoint,"files");
+
+    /*post the data*/
+    send_str = json_dumps(reg_json, JSON_COMPACT);
+    curl_post_json_string(&context,
+						  url,
+						  send_str,
+						  &response);
+
+    /*error handling*/
+    if (response && (response->status != 201)) {
+		dbg_info(ERROR, "Error registering to UNIS: %s", response->data);
+		return;
+    }
+
+    if (response){
+		*ret_json = malloc(sizeof(response->data));
+		memcpy(*ret_json, response->data, sizeof(response->data));
+		free_curl_response(response);
+    }
+}
+
+void unis_get_exnode(char *filename, char** json_dict){
+    char *query;
+        
+    if(filename == NULL){
+		dbg_info(ERROR, "Invalid filename");
+		return;
+    }
+    
+    dbg_info(DEBUG, "Retrieving file extents from unis\n");
+
+    asprintf(&query, "%s%s", "files?name=",filename);
+
+    unis_query(context.url, query, json_dict);
+    
+    dbg_info(DEBUG, "opt : %s \n", *json_dict);
+
+    free(query);
 }
