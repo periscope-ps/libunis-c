@@ -7,3 +7,9 @@ autom4te.cache/
 config.log
 config.status
 libunis-c.a
+*.la
+*.lo
+*~
+.libs/
+Makefile.in
+libunis-c.pc
