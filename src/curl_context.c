@@ -79,6 +79,9 @@ int copy_curl_context(curl_context *src, curl_context *dst) {
 
 curl_response *init_curl_response() {
 	curl_response *cr = malloc(sizeof(curl_response));
+	cr->redirect_url = NULL;
+	cr->content_type = NULL;
+	cr->data = NULL;
 	if (!cr)
 		return NULL;
 	memset(cr, 0, sizeof(curl_response));
@@ -88,11 +91,11 @@ curl_response *init_curl_response() {
 int free_curl_response(curl_response *cr) {
 	if (!cr)
 		return -1;
-	if (cr->redirect_url)
+	if (cr->redirect_url != NULL)
 		free(cr->redirect_url);
-	if (cr->content_type)
+	if (cr->content_type != NULL)
 		free(cr->content_type);
-	if (cr->data)
+	if (cr->data != NULL)
 		free(cr->data);
 	free(cr);
 	return 0;
@@ -149,6 +152,7 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist* headers, i
 
 	if (data) {
 		send_len = strlen(data);
+
 	} else {
 		send_len = 0;
 	}
@@ -164,7 +168,7 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist* headers, i
 		.lptr = NULL,
 		.len = send_len
 	};
-	
+
 	struct curl_http_data recv_data = {
 		.ptr = NULL,
 		.lptr = NULL,
@@ -184,7 +188,7 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist* headers, i
 			__set_curl_ssl_certificates(curl, cc->cacerts, cc->certfile, cc->keypass, cc->keyfile);
 		}
 	}
-	
+
 	//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 	
 	curl_easy_setopt(curl, CURLOPT_URL, endpoint);
@@ -193,7 +197,7 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist* headers, i
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
 	curl_easy_setopt(curl, CURLOPT_READDATA, &send_data);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &recv_data);
-	
+
 	if (cc->follow_redirect) {
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 	}
@@ -224,11 +228,19 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist* headers, i
 	if (curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &tmplong) == CURLE_OK)
 		(*ret_data)->status = tmplong;
 	
-	if (curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL, &tmpptr) == CURLE_OK)
-		asprintf(&((*ret_data)->redirect_url), "%s", tmpptr);
+	if (curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL, &tmpptr) == CURLE_OK){
+		if(tmpptr != NULL){
+			asprintf(&((*ret_data)->redirect_url), "%s", tmpptr);
+		}
+	}
 	
-	if (curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &tmpptr) == CURLE_OK)
-		asprintf(&((*ret_data)->content_type), "%s", tmpptr);
+	if (curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &tmpptr) == CURLE_OK){
+		if(tmpptr != NULL){
+			(*ret_data)->content_type = malloc(strlen(tmpptr) + 1);
+			strncpy((*ret_data)->content_type, tmpptr, strlen(tmpptr) + 1);
+			//asprintf(&((*ret_data)->content_type), "%s", tmpptr);
+		}
+	}
 
 	if (recv_data.len) {
 		(*ret_data)->data = malloc(recv_data.len+1 * sizeof(char));
@@ -243,7 +255,7 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist* headers, i
 	if (!(cc->curl_persist)) {
 		curl_easy_cleanup(curl);
 	}
-	
+
 	return (*ret_data)->data;
 	
  error_exit:
