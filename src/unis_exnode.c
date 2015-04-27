@@ -10,6 +10,10 @@ char *encode_json(const char *dir, const char *parent_id);
 char *parse_json(const char *json_stream, const char *object);
 char *_unis_create_directory(curl_context *context, char *dir, char *parent_id);
 
+/* unis_curl_init : Init the curl context and init context
+ * unis_config : Unis config to use
+ * context : curl context
+*/
 int unis_curl_init(unis_config *config, curl_context **context){
 	
 	if(config == NULL){
@@ -43,7 +47,10 @@ int unis_curl_init(unis_config *config, curl_context **context){
 	return 1;
 }
 
-
+ 
+/* unis_curl_free : Free the curl context, in case of persistent connection it does curl clean up
+ * context : curl context
+*/
 void unis_curl_free(curl_context *context){
 	
 	if(context == NULL){
@@ -67,7 +74,11 @@ void unis_curl_free(curl_context *context){
 	free(context);
 }
 
-/*POST exnodes to unis*/
+/* unis_POST_exnode : POST exnodes to unis
+ * unis_config : Unis config to use
+ * post_json : JSON dump to push
+ * respone_json : return JSON response in allocated buffer, need to freed by user
+ */
 void unis_POST_exnode(unis_config *config, char *post_json, char **response_json){
 
 	curl_context *context;
@@ -119,7 +130,10 @@ void unis_POST_exnode(unis_config *config, char *post_json, char **response_json
 }
 
 
-/*GET exnodes from unis*/
+/* unis_GET exnode : get exnodes  from unis in JSON format
+ * unis_config : Unis config to use
+ * response_json : return JSON string, need to be freed by user
+*/
 void unis_GET_exnode(unis_config *config, char **response_json){
 	curl_context *context;
     curl_response *response;
@@ -348,10 +362,3 @@ static char *_strdup(const char* str){
 	
 	return temp;
 }
-
-
-
-
-
-
-
