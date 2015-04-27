@@ -49,6 +49,22 @@ int init_curl(curl_context *cc, long flags) {
 	return 0;
 }
 
+/*curl_cleanup :Call curl_easy_cleanup in case of persistant connection
+ *
+ */ 
+int curl_cleanup(curl_context *cc){
+	
+	if(cc == NULL){
+		return -1;
+	}
+	
+	if (cc->curl_persist) {
+		curl_easy_cleanup(cc->curl);
+	}
+	
+	return 1;
+}
+
 static void __init_curl_ssl(CURL *curl, long flags) {
 	// skip server verification
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);

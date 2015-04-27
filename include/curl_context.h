@@ -83,7 +83,7 @@ struct curl_http_data {
  */
 int init_curl(curl_context *cc, long flags);
 
-curl_response *init_curl_response();
+int curl_cleanup(curl_context *cc);
 
 int free_curl_response(curl_response *cr);
 

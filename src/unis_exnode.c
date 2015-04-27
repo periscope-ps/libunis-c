@@ -3,6 +3,12 @@
 #include <libunis_c_log.h>
 #include <string.h>
 #include <stdlib.h>
+#include <jansson.h>
+
+static char * _strdup(const char* str);
+char *encode_json(const char *dir, const char *parent_id);
+char *parse_json(const char *json_stream, const char *object);
+char *_unis_create_directory(curl_context *context, char *dir, char *parent_id);
 
 int unis_curl_init(unis_config *config, curl_context **context){
 	
@@ -18,12 +24,12 @@ int unis_curl_init(unis_config *config, curl_context **context){
 
 	*context = malloc(sizeof(curl_context));
 	
-	(*context)->url = config->endpoint;
+	(*context)->url = _strdup(config->endpoint);
     (*context)->use_ssl = config->use_ssl;
-    (*context)->certfile = Strdup(config->certfile);
-    (*context)->keyfile = Strdup(config->keyfile);
-    (*context)->keypass = Strdup(config->keypass);
-    (*context)->cacerts = Strdup(config->cacerts);
+    (*context)->certfile = _strdup(config->certfile);
+    (*context)->keyfile = _strdup(config->keyfile);
+    (*context)->keypass = _strdup(config->keypass);
+    (*context)->cacerts = _strdup(config->cacerts);
     (*context)->curl_persist = 0;
 	(*context)->use_cookies = 0;
 	(*context)->follow_redirect = 0;
@@ -37,7 +43,7 @@ int unis_curl_init(unis_config *config, curl_context **context){
 	return 1;
 }
 
-/**/
+
 void unis_curl_free(curl_context *context){
 	
 	if(context == NULL){
@@ -55,7 +61,9 @@ void unis_curl_free(curl_context *context){
 	
 	if(context->cacerts)
 		free(context->cacerts);
-	
+
+	curl_cleanup(context);
+
 	free(context);
 }
 
@@ -153,92 +161,163 @@ void unis_GET_exnode(unis_config *config, char **response_json){
 	
 }
 
-/*Create directory on unis*/
-void unis_create_directory(unis_config *config, char *dir_path){
-}
-
-/*
-void mkdir(char *path, char **dir_id, char *unis_url){
+/* unis_create_directory : Create directory in directory path.
+ * config : unis config to use, make sure curl_persist is set. This function make susequent call to create each directory in the path, To save RRT we need to use persistent connection
+ * dir_path : Absolute path from root.
+ * return : id for the directory.
+*/
+char *unis_create_directory(unis_config *config, const char *dir_path){
 	
-	int ret = 0;
 	char *dir;
 	char *id;
 	char *parent_id = NULL;
-	*dir_id = NULL;
+	curl_context *context;
 
-	if(path == NULL){
+	if(dir_path == NULL){
 		fprintf(stderr, "Path is null\n");
-		return;
-	}
-
-	if(unis_url == NULL){
-		fprintf(stderr, "Unis URL is NULL\n");
-		return;
+		return NULL;
 	}
 	
+	if(!config->persistent){
+		fprintf(stderr, "create_directory expect curl_persistant flag to be set in unis config \n");
+		return NULL;
+	}
+
+	if(!unis_curl_init(config, &context)){
+		fprintf(stderr, "Failed to init CURL \n");
+		return NULL;
+	}
+	
+	char *path = _strdup(dir_path);
+	//fprintf(stderr, "Path is %s \n", path);
+
 	// create each directory
 	dir = strtok(path, "/");
 	while(dir != NULL){
-		create_dir(dir, parent_id, &id, unis_url);
+		id = _unis_create_directory(context, dir, parent_id);
 		if(id == NULL){
 			fprintf(stderr, "Failed to create %s \n", path);
-			return;
+			parent_id = NULL;
+			goto free_curl;
 		}
 		if(parent_id != NULL){
 			free(parent_id);
 		}
 		parent_id = id;
+		dir = strtok(NULL, "/");
 	}
-
-	*dir_id = parent_id;
 	
+ free_curl:
+	unis_curl_free(context);
+
+	free(path);
+	return  parent_id;
 }
 
-void create_dir(char *dir, char *parent_id, char **ret_id, char *unis_url){
-	
-	*ret_id = NULL;
+
+/*_unis_create_directory : Create actual directory
+ * context : curl context
+ * dir : directory name.
+ * parent_dir : id of parent directory
+ * return : id of created directory
+*/
+char *_unis_create_directory(curl_context *context, char *dir, char *parent_id){
 	
 	if(dir == NULL){
 		fprintf(stderr, "Directory is NULL \n");
-		return;
+		return NULL;
 	}
 	
-	if(unis_url == NULL){
-		fprintf(stderr, "Unis URL is NULL \n");
-		return;
+	if(context == NULL){
+		fprintf(stderr, "Curl context is NULL \n");
+		return NULL;
 	}
 	
 	char *str_exnode;
-	int ret;
-	int len;
-	char *response;
+	curl_response *response;
+	char *id = NULL;
 
 	// encode json
-	str_exnode = encode_json(&json_exnode, dir, parent_id);
+	str_exnode = encode_json(dir, parent_id);
 	if(str_exnode == NULL){
-		fprintf(stderr, " Json encoding failed \n");
-		return;
+		fprintf(stderr, " Exnode JSON encoding failed \n");
+		return NULL;
 	}
 
-	// POST json to unis
-	ret = curl_post_json_string(unis_url, str_exnode, sizeof(str_exnode), &response, &len);
-	if(ret != LORS_SUCCESS){
-		fprintf(stderr, "Failed to post json to UNIS \n");
-		return;
+	curl_post_json_string(context,
+						  NULL,
+						  str_exnode,
+						  &response);
+
+	if (response == NULL ||  response->data == NULL) {
+		fprintf(stderr, "No data in response \n");
+		goto free_exnode;
 	}
+		
+    if (response && (response->status != 201)) {
+		fprintf(stderr, "Error while posting data: %s", response->data);
+		goto free_response;
+    }
 	
-	json_loads()
-	free(response);
+	id = parse_json(response->data, "id");
 
+ free_response:
+	free_curl_response(response);
+
+ free_exnode:	
 	free(str_exnode);
-	
 
-
-	   
-	
+	return id;
 }
 
-char * encode_json(const char *dir, const char *parent_id){
+/* parse_json  : Load the JSON stream and find object.
+ * json_stream : stream to load.
+ * object      : JSON object to find
+ * return      : Value of json object
+ */
+char *parse_json(const char *json_stream, const char *object){
+
+	json_t         *json_ret;
+	json_error_t    json_err;
+	const char      *ret_str;
+
+	if(json_stream == NULL){
+		fprintf(stderr, "JSON stream is NULL \n");
+		return NULL;
+	}
+	
+	if(object == NULL){
+		fprintf(stderr, "object to find  is NULL \n");
+		return NULL;
+	}
+	
+	json_ret = json_loads(json_stream, 0, &json_err);
+	if(json_ret == NULL){
+		fprintf(stderr, "Could not decode JSON: %d: %s\n", json_err.line, json_err.text);
+		return NULL;
+	}
+	
+	json_ret = json_object_get(json_ret, object);
+	if(json_ret == NULL){
+		fprintf(stderr, "Failed to find %s \n", object);
+		return NULL;
+	}
+	ret_str = json_string_value(json_ret);
+	if(ret_str == NULL){
+		fprintf(stderr, "Value not found for %s \n", object);
+		return NULL;
+	}
+
+	return _strdup(ret_str);
+}
+
+/* encode_json : encode the exnode in the JSON format n dump it in string
+ * dir : directory name
+ * parent_id : parent directory id
+ * return : JSON dump of exnode
+ *
+*/
+char *encode_json(const char *dir, const char *parent_id){
 	
 	if(dir == NULL){
 		fprintf(stderr, "Invalid directory name \n");
@@ -248,15 +327,27 @@ char * encode_json(const char *dir, const char *parent_id){
 	// create json object
 	json_t *json_exnode = json_object();
 	json_object_set(json_exnode, "name", json_string(dir));
-	json_object_set(json_exnode, "parent", (parent_id == NULL) ? json_null() : json_string(parent));
+	json_object_set(json_exnode, "parent", (parent_id == NULL) ? json_null() : json_string(parent_id));
 	json_object_set(json_exnode, "created", json_integer(time(NULL)));
 	json_object_set(json_exnode, "modified", json_integer(time(NULL)));
 	json_object_set(json_exnode, "mode", json_string("directory"));
 	json_object_set(json_exnode, "size", json_integer(0));
 
 	return json_dumps(json_exnode, JSON_INDENT(1));
-}*/
+}
 
+static char *_strdup(const char* str){
+	
+	if(str == NULL){
+		return NULL;
+	}
+	
+	int size = strlen(str) + 1;
+	char *temp = malloc(size * sizeof(char));
+	strncpy(temp, str, size);
+	
+	return temp;
+}
 
 
 

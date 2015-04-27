@@ -7,37 +7,38 @@
 #include <jansson.h>
 
 typedef struct unis_loc_t {
-  char   *country;
-  char   *street_address;
-  char   *state;
-  char   *institution;
-  char   *zipcode;
-  float   lat;
-  float   lon;
+	char   *country;
+	char   *street_address;
+	char   *state;
+	char   *institution;
+	char   *zipcode;
+	float   lat;
+	float   lon;
 } unis_loc;
 
 typedef struct unis_config_t {
-  unis_loc loc_info;
-  char *name;
-  char *type;
-  char *endpoint;
-  char *iface;
-  char *protocol_name;
-  unsigned int port;
-  unsigned int do_register;
-  unsigned int registration_interval;
-  unsigned int refresh_timer;
-  int  use_ssl;     /**< integer 1 or 0 to use ssl */
-  char *certfile;   /**< char pointer to certfile */
-  char *keyfile;    /**< char pointer to keyfile */
-  char *keypass;    /**< char pointer to keypass */
-  char *cacerts;    /**< char pointer to cacerts */
+	unis_loc loc_info;
+	char *name;
+	char *type;
+	char *endpoint;
+	char *iface;
+	char *protocol_name;
+	unsigned int port;
+	unsigned int do_register;
+	unsigned int registration_interval;
+	unsigned int refresh_timer;
+	unsigned int persistent;
+	int  use_ssl;     /**< integer 1 or 0 to use ssl */
+	char *certfile;   /**< char pointer to certfile */
+	char *keyfile;    /**< char pointer to keyfile */
+	char *keypass;    /**< char pointer to keypass */
+	char *cacerts;    /**< char pointer to cacerts */
 } unis_config;
 
 /* public methods */
 
 /*
-   should be called to set unis server settings
+  should be called to set unis server settings
 */
 int unis_init(unis_config* cc);
 

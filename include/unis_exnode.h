@@ -10,6 +10,6 @@ void unis_POST_exnode(unis_config *config, char *post_json, char **response_json
 void unis_GET_exnode(unis_config *config, char **response_json);
 
 /*Create directory on unis*/
-void unis_create_directory(unis_config *config, char *dir_path);
+char *unis_create_directory(unis_config *config, const char *dir_path);
 
 #endif
