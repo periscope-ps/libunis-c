@@ -4,8 +4,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <jansson.h>
+#include <regex.h>
+
+#define MAX_ERROR_MSG 0x1000
 
 static char * _strdup(const char* str);
+int check_dir_path(const char *dir_path);
 char *encode_json(const char *dir, const char *parent_id);
 char *parse_json(const char *json_stream, const char *object);
 char *_unis_create_directory(curl_context *context, char *dir, char *parent_id);
@@ -13,7 +17,7 @@ char *_unis_create_directory(curl_context *context, char *dir, char *parent_id);
 /* unis_curl_init : Init the curl context and init context
  * unis_config : Unis config to use
  * context : curl context
-*/
+ */
 int unis_curl_init(unis_config *config, curl_context **context){
 	
 	if(config == NULL){
@@ -50,7 +54,7 @@ int unis_curl_init(unis_config *config, curl_context **context){
  
 /* unis_curl_free : Free the curl context, in case of persistent connection it does curl clean up
  * context : curl context
-*/
+ */
 void unis_curl_free(curl_context *context){
 	
 	if(context == NULL){
@@ -133,7 +137,7 @@ void unis_POST_exnode(unis_config *config, char *post_json, char **response_json
 /* unis_GET exnode : get exnodes  from unis in JSON format
  * unis_config : Unis config to use
  * response_json : return JSON string, need to be freed by user
-*/
+ */
 void unis_GET_exnode(unis_config *config, char **response_json){
 	curl_context *context;
     curl_response *response;
@@ -179,31 +183,37 @@ void unis_GET_exnode(unis_config *config, char **response_json){
  * config : unis config to use, make sure curl_persist is set. This function make susequent call to create each directory in the path, To save RRT we need to use persistent connection
  * dir_path : Absolute path from root.
  * return : id for the directory.
-*/
-char *unis_create_directory(unis_config *config, const char *dir_path){
+ */
+
+int unis_create_directory(unis_config *config, const char *dir_path, char **key){
 	
 	char *dir;
 	char *id;
 	char *parent_id = NULL;
 	curl_context *context;
+	*key = NULL;
+	int ret = 0;
 
 	if(dir_path == NULL){
 		fprintf(stderr, "Path is null\n");
-		return NULL;
+		return ret;
 	}
 	
 	if(!config->persistent){
 		fprintf(stderr, "create_directory expect curl_persistant flag to be set in unis config \n");
-		return NULL;
+		return ret;
 	}
 
 	if(!unis_curl_init(config, &context)){
 		fprintf(stderr, "Failed to init CURL \n");
-		return NULL;
+		return ret;
 	}
 	
+    if(check_dir_path(dir_path) == 0){
+		return ret;
+	}
+
 	char *path = _strdup(dir_path);
-	//fprintf(stderr, "Path is %s \n", path);
 
 	// create each directory
 	dir = strtok(path, "/");
@@ -212,6 +222,7 @@ char *unis_create_directory(unis_config *config, const char *dir_path){
 		if(id == NULL){
 			fprintf(stderr, "Failed to create %s \n", path);
 			parent_id = NULL;
+			ret = 0;
 			goto free_curl;
 		}
 		if(parent_id != NULL){
@@ -220,12 +231,14 @@ char *unis_create_directory(unis_config *config, const char *dir_path){
 		parent_id = id;
 		dir = strtok(NULL, "/");
 	}
-	
+	ret = 1;
+	*key = parent_id;
+
  free_curl:
 	unis_curl_free(context);
 
 	free(path);
-	return  parent_id;
+	return ret;
 }
 
 
@@ -234,7 +247,7 @@ char *unis_create_directory(unis_config *config, const char *dir_path){
  * dir : directory name.
  * parent_dir : id of parent directory
  * return : id of created directory
-*/
+ */
 char *_unis_create_directory(curl_context *context, char *dir, char *parent_id){
 	
 	if(dir == NULL){
@@ -330,7 +343,7 @@ char *parse_json(const char *json_stream, const char *object){
  * parent_id : parent directory id
  * return : JSON dump of exnode
  *
-*/
+ */
 char *encode_json(const char *dir, const char *parent_id){
 	
 	if(dir == NULL){
@@ -350,7 +363,11 @@ char *encode_json(const char *dir, const char *parent_id){
 	return json_dumps(json_exnode, JSON_INDENT(1));
 }
 
-static char *_strdup(const char* str){
+/*_strdup : Implmentation handle a case were input string is NULL. It return NULL string in that case
+ * str : Input string
+ * return : duplicated string
+ */
+static char *_strdup(const char *str){
 	
 	if(str == NULL){
 		return NULL;
@@ -361,4 +378,58 @@ static char *_strdup(const char* str){
 	strncpy(temp, str, size);
 	
 	return temp;
+}
+
+/* Reference : http://www.lemoda.net/c/unix-regex/
+ * check_dir_path : Check dir path with regex 
+ * dir_path : absolute directory path 
+ * return : 0 or 1
+ */
+int check_dir_path(const char *dir_path){
+	int ret = 0;
+	int i = 0;
+	int nomatch;
+	int status;
+	const int n_matches = 1;
+	const char *regex_text = "(\\/([[:alnum:]][/]?)*)";   // regular expression for file path
+	char *p = dir_path;
+	regmatch_t m[n_matches];
+	regex_t r;
+	
+	// error checking
+	if(dir_path == NULL){
+		fprintf(stderr, "Invalid directory path \n");
+		return ret;
+	}
+
+	// compile regular expression
+	status = regcomp (&r, regex_text, REG_EXTENDED|REG_NEWLINE);
+	if (status != 0) {
+		char error_message[MAX_ERROR_MSG];
+		regerror(status, &r, error_message, MAX_ERROR_MSG);
+		fprintf(stderr, "Regex error compiling '%s': %s\n",
+				 regex_text, error_message);
+		goto bail;
+	}
+	
+	// check the string against regex
+	nomatch = regexec (&r, p, n_matches, m, 0);
+	if (nomatch) {
+		fprintf(stderr,"No matches found \n");
+		goto bail;
+	}
+	
+	// whole string should be first match or substring matching pattern. 
+	// We are only interested in whole string
+	i = m[0].rm_eo - m[0].rm_so;                                                                                 
+	if(i == strlen(dir_path)){
+		ret = 1;
+	}else{
+		fprintf(stderr, "Invalid Directory Path : %s \n",dir_path);
+	}
+	
+ bail:
+	regfree (& r);
+	return ret;
+	
 }
