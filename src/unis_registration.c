@@ -58,6 +58,7 @@ int unis_init(unis_config* cc) {
 		return -1;
     }
 
+
     memcpy(&config.loc_info, &cc->loc_info, sizeof(cc->loc_info));
     config.port = cc->port;
     config.do_register = cc->do_register;
@@ -218,7 +219,7 @@ static void *unis_registration_thread(void *arg) {
     while (1) {
 		dbg_info(DEBUG, "in while loop\n");
 		if (reg_str != NULL) {
-			reg_json = json_loads(reg_str, 0, &json_err);
+		        reg_json = json_loads(reg_str, 0, &json_err);
 			if (!reg_json) {
 				dbg_info(ERROR, "Could not decode registration string: %d: %s\n",
 						 json_err.line, json_err.text);
@@ -243,9 +244,9 @@ static void *unis_registration_thread(void *arg) {
 
 			/* with valid json, register to UNIS endpoint */
 			curl_post_json_string(&context,
-								  url,
-								  send_str,
-								  &response);
+					      url,
+					      send_str,
+					      &response);
 
 			if (response && (response->status != 201)) {
 				dbg_info(ERROR, "Error registering to UNIS: %s", response->data);
@@ -258,15 +259,16 @@ static void *unis_registration_thread(void *arg) {
 				if (!resp) {
 					dbg_info(ERROR, "Could not decode registration response! %d: %s",
 							 json_err.line, json_err.text);
-					return;
+					return NULL;
 				}
 				key = json_object_get(resp, "id");
 				if (key) {
 					sid = (char*)json_string_value(key);
 				}
 			}
-			else if (response) {
-				free_curl_response(response);
+			
+			if (response) {
+			        free_curl_response(response);
 			}
 		}
 		sleep(cfg->registration_interval);
@@ -287,7 +289,7 @@ int unis_register_stop() {
 
 
 int unis_get_service_access_points(char *sname, char ***ret_aps, int *num_aps) {
-    json_t *json_ret;;
+    json_t *json_ret = NULL;
     json_error_t json_err;
     char *query;
     char *ret_str;
@@ -415,9 +417,9 @@ void unis_register_exnode(json_t *reg_json, char **ret_json){
     /*post the data*/
     send_str = json_dumps(reg_json, JSON_COMPACT);
     curl_post_json_string(&context,
-						  url,
-						  send_str,
-						  &response);
+			  url,
+			  send_str,
+			  &response);
 
     /*error handling*/
     if (response && (response->status != 201)) {
@@ -426,8 +428,8 @@ void unis_register_exnode(json_t *reg_json, char **ret_json){
     }
 
     if (response){
-		*ret_json = malloc(sizeof(response->data));
-		memcpy(*ret_json, response->data, sizeof(response->data));
+		*ret_json = malloc(sizeof(*response->data));
+		memcpy(*ret_json, response->data, sizeof(*response->data));
 		free_curl_response(response);
     }
 }

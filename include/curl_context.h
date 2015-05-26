@@ -64,7 +64,6 @@ typedef struct curl_response_t {
  */
 struct curl_http_data {
         char *ptr;       /**< char pointer to */
-        char *lptr;      /**< char pointer to */
         long len;        /**< length */
 };
 
