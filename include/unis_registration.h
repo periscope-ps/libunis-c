@@ -12,6 +12,7 @@ typedef struct unis_loc_t {
 	char   *state;
 	char   *institution;
 	char   *zipcode;
+        char   *email;
 	float   lat;
 	float   lon;
 } unis_loc;

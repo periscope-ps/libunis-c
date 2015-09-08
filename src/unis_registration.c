@@ -177,6 +177,8 @@ static int unis_make_reg_str(int interval, char *json, char **ret_json) {
 		json_object_set(location, "institution", json_string(config.loc_info.institution));
     if (config.loc_info.zipcode && strlen(config.loc_info.zipcode))
 		json_object_set(location, "zipcode", json_string(config.loc_info.zipcode));
+    if (config.loc_info.email && strlen(config.loc_info.email))
+		json_object_set(location, "email", json_string(config.loc_info.email));
     json_object_set(location, "latitude", json_real(config.loc_info.lat));
     json_object_set(location, "longitude", json_real(config.loc_info.lon));
 
