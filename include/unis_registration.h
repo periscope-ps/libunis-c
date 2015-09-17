@@ -17,6 +17,11 @@ typedef struct unis_loc_t {
 	float   lon;
 } unis_loc;
 
+typedef struct service_listener_t {
+    char *protocol_name;
+    char *port;
+} service_listener;
+
 typedef struct unis_config_t {
 	unis_loc loc_info;
 	char *name;
@@ -29,6 +34,8 @@ typedef struct unis_config_t {
 	unsigned int registration_interval;
 	unsigned int refresh_timer;
 	unsigned int persistent;
+        service_listener *listeners;
+        int  listener_count;
 	int  use_ssl;     /**< integer 1 or 0 to use ssl */
 	char *certfile;   /**< char pointer to certfile */
 	char *keyfile;    /**< char pointer to keyfile */
