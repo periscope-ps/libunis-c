@@ -89,23 +89,25 @@ int unis_init(unis_config* cc) {
 	    malloc(config.listener_count * sizeof(service_listener));
 	listener = config.listeners;
 	for (i = 0;i<config.listener_count;i++) {
-	    listener->protocol_name =
-		strndup((cc->listeners+i)->protocol_name,
-			strlen((cc->listeners+i)->protocol_name));
+	    if((cc->listeners+i)->is_disabled != 0) {
+		listener->protocol_name =
+		    strndup((cc->listeners+i)->protocol_name,
+			    strlen((cc->listeners+i)->protocol_name));
 
-	    if (!(listener->protocol_name)) {
-		dbg_info(ERROR, "No protocol name present for listners");
-		return -1;
-	    }
-	    listener->port =
-		strndup((cc->listeners+i)->port,
-			strlen((cc->listeners+i)->port));
+		if (!(listener->protocol_name)) {
+		    dbg_info(ERROR, "No protocol name present for listners");
+		    return -1;
+		}
+		listener->port =
+		    strndup((cc->listeners+i)->port,
+			    strlen((cc->listeners+i)->port));
 
-	    if (!(listener->port)) {
-		dbg_info(ERROR, "No port name present for listners");
-		return -1;
+		if (!(listener->port)) {
+		    dbg_info(ERROR, "No port name present for listners");
+		    return -1;
+		}
+		listener++;
 	    }
-	    listener++;
 	}
     }
 

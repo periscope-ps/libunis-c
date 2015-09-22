@@ -18,8 +18,9 @@ typedef struct unis_loc_t {
 } unis_loc;
 
 typedef struct service_listener_t {
-    char *protocol_name;
-    char *port;
+    char         *protocol_name;
+    char         *port;
+    unsigned int is_disabled;
 } service_listener;
 
 typedef struct unis_config_t {
