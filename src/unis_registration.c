@@ -420,7 +420,7 @@ json_t *get_multiple_listeners(json_t *root, int *status) {
 			for(j = 0; j < config.listener_count; j++)
 			{
 			    snprintf(buf, sizeof(buf), "%s/%d", ips[i], 
-				     atoi(config.listeners[j].port));
+				     config.listeners[j].port);
 			    entry = json_object();
 			    json_object_set(entry, config.listeners[j].protocol_name, 
 					    json_string(buf));
