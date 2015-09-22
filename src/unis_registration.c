@@ -89,7 +89,6 @@ int unis_init(unis_config* cc) {
 	    malloc(config.listener_count * sizeof(service_listener));
 	listener = config.listeners;
 	for (i = 0;i<config.listener_count;i++) {
-	    if((cc->listeners+i)->is_disabled != 0) {
 		listener->protocol_name =
 		    strndup((cc->listeners+i)->protocol_name,
 			    strlen((cc->listeners+i)->protocol_name));
@@ -101,7 +100,6 @@ int unis_init(unis_config* cc) {
 		listener->port = (cc->listeners+i)->port;
 		listener->is_disabled = 0;
 		listener++;
-	    }
 	}
     }
 
