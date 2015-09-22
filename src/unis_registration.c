@@ -98,14 +98,8 @@ int unis_init(unis_config* cc) {
 		    dbg_info(ERROR, "No protocol name present for listners");
 		    return -1;
 		}
-		listener->port =
-		    strndup((cc->listeners+i)->port,
-			    strlen((cc->listeners+i)->port));
-
-		if (!(listener->port)) {
-		    dbg_info(ERROR, "No port name present for listners");
-		    return -1;
-		}
+		listener->port = (cc->listeners+i)->port;
+		listener->is_disabled = 0;
 		listener++;
 	    }
 	}
@@ -407,7 +401,7 @@ json_t *get_multiple_listeners(json_t *root, int *status) {
 				    {
 					ip = config.iface;
 					snprintf(buf, sizeof(buf), "%s/%d", 
-						 ip, atoi(config.listeners[j].port));
+						 ip, config.listeners[j].port);
 					entry = json_object();
 					json_object_set(entry, 
 							config.listeners[j].protocol_name, 
