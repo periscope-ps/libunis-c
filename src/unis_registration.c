@@ -422,12 +422,14 @@ json_t *get_multiple_listeners(json_t *root, int *status) {
 	    /* listen on all non-loopback IPs */
 	    for(j = 0; j < config.listener_count; j++)
 	    {
-		snprintf(buf, sizeof(buf), "%s/%d", ips[i],
-			 config.listeners[j].port);
-		entry = json_object();
-		json_object_set(entry, config.listeners[j].protocol_name,
-				json_string(buf));
-		json_array_append_new(listeners, entry);
+		if(config.listeners[j].is_disabled == 0) {
+		    snprintf(buf, sizeof(buf), "%s/%d", ips[i],
+			     config.listeners[j].port);
+		    entry = json_object();
+		    json_object_set(entry, config.listeners[j].protocol_name,
+				    json_string(buf));
+		    json_array_append_new(listeners, entry);
+		}
 	    }
 	}
     }
