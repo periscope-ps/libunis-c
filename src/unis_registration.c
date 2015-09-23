@@ -98,7 +98,7 @@ int unis_init(unis_config* cc) {
 		    return -1;
 		}
 		listener->port = (cc->listeners+i)->port;
-		listener->is_disabled = 0;
+		listener->is_disabled = (cc->listeners+i)->is_disabled;
 		listener++;
 	}
     }
