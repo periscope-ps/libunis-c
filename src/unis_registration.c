@@ -381,52 +381,55 @@ json_t *get_multiple_listeners(json_t *root, int *status) {
     listeners = json_array();
     get_all_ips(&ips, &ip_count);
     for(i = 0; i < ip_count; i++) {
-		json_t *entry;
-		char buf[255];
+	json_t *entry;
+	char buf[255];
 
-		if (strchr(ips[i], ':') != NULL) {
-			continue;
-		}
-		else if (!strcmp(ips[i], "127.0.0.1")) {
-			continue;
-		}
-		else {
-			if (once) {
-				char *ip;
-				if (config.iface) {
-					/* add listener entry for specified iface */
-				    for(j = 0; j<config.listener_count;j++)
-				    {
-					ip = config.iface;
-					snprintf(buf, sizeof(buf), "%s/%d", 
-						 ip, config.listeners[j].port);
-					entry = json_object();
-					json_object_set(entry, 
-							config.listeners[j].protocol_name, 
-							json_string(buf));
-					json_array_append_new(listeners, entry);
-				    }
-				}
-				else {
-					ip = ips[i];
-				}
-				/* set accessPoint to be first encountered IP, or iface if set */
-				snprintf(buf, sizeof(buf), "%s://%s:%d", 
-					 config.protocol_name, ip, config.port);
-				json_object_set(root, "accessPoint", json_string(buf));
-				once = 0;
-			}
-			/* listen on all non-loopback IPs */
-			for(j = 0; j < config.listener_count; j++)
-			{
-			    snprintf(buf, sizeof(buf), "%s/%d", ips[i], 
+	if (strchr(ips[i], ':') != NULL) {
+	    continue;
+	}
+	else if (!strcmp(ips[i], "127.0.0.1")) {
+	    continue;
+	}
+	else {
+	    if (once) {
+		char *ip;
+		if (config.iface) {
+		    /* add listener entry for specified iface */
+		    for(j = 0; j<config.listener_count;j++)
+		    {
+			if(config.listeners[j].is_disabled == 0) {
+			    ip = config.iface;
+			    snprintf(buf, sizeof(buf), "%s/%d",ip,
 				     config.listeners[j].port);
 			    entry = json_object();
-			    json_object_set(entry, config.listeners[j].protocol_name, 
+			    json_object_set(entry,
+					    config.listeners[j].protocol_name,
 					    json_string(buf));
-			    json_array_append_new(listeners, entry);
+			    json_array_append_new(listeners,
+						  entry);
 			}
+		    }
 		}
+		else {
+		    ip = ips[i];
+		}
+		/* set accessPoint to be first encountered IP, or iface if set */
+		snprintf(buf, sizeof(buf), "%s://%s:%d",
+			 config.protocol_name, ip, config.port);
+		json_object_set(root, "accessPoint", json_string(buf));
+		once = 0;
+	    }
+	    /* listen on all non-loopback IPs */
+	    for(j = 0; j < config.listener_count; j++)
+	    {
+		snprintf(buf, sizeof(buf), "%s/%d", ips[i],
+			 config.listeners[j].port);
+		entry = json_object();
+		json_object_set(entry, config.listeners[j].protocol_name,
+				json_string(buf));
+		json_array_append_new(listeners, entry);
+	    }
+	}
     }
 
     *status = 0;
