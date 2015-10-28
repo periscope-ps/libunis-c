@@ -32,6 +32,8 @@ static void *unis_registration_thread(void *arg);
 static json_t * __unis_get_json_listeners();
 
 int unis_init(unis_config* cc) {
+    int i = 0;
+    service_listener *listener;
 
     if (cc->name == NULL || !(config.name = strndup(cc->name, strlen(cc->name)))) {
 		dbg_info(ERROR, "No UNIS registration name specified!");
@@ -80,6 +82,26 @@ int unis_init(unis_config* cc) {
     context.url = config.endpoint;
 
     context.use_ssl = cc->use_ssl;
+
+    config.listener_count = cc->listener_count;
+    if (config.listener_count > 0) {
+	config.listeners =
+	    malloc(config.listener_count * sizeof(service_listener));
+	listener = config.listeners;
+	for (i = 0;i<config.listener_count;i++) {
+		listener->protocol_name =
+		    strndup((cc->listeners+i)->protocol_name,
+			    strlen((cc->listeners+i)->protocol_name));
+
+		if (!(listener->protocol_name)) {
+		    dbg_info(ERROR, "No protocol name present for listners");
+		    return -1;
+		}
+		listener->port = (cc->listeners+i)->port;
+		listener->is_disabled = (cc->listeners+i)->is_disabled;
+		listener++;
+	}
+    }
 
     // copy paths into context
     context.certfile = Strdup(cc->certfile);
@@ -352,11 +374,83 @@ int unis_get_service_access_points(char *sname, char ***ret_aps, int *num_aps) {
     return 0;
 }
 
+json_t *get_multiple_listeners(json_t *root, int *status) {
+    json_t *listeners;
+    char **ips;
+    int ip_count, i, j, once = 1;
+    listeners = json_array();
+    get_all_ips(&ips, &ip_count);
+    for(i = 0; i < ip_count; i++) {
+	json_t *entry;
+	char buf[255];
+
+	if (strchr(ips[i], ':') != NULL) {
+	    continue;
+	}
+	else if (!strcmp(ips[i], "127.0.0.1")) {
+	    continue;
+	}
+	else {
+	    if (once) {
+		char *ip;
+		if (config.iface) {
+		    /* add listener entry for specified iface */
+		    for(j = 0; j<config.listener_count;j++)
+		    {
+			if(config.listeners[j].is_disabled == 0) {
+			    ip = config.iface;
+			    snprintf(buf, sizeof(buf), "%s/%d",ip,
+				     config.listeners[j].port);
+			    entry = json_object();
+			    json_object_set(entry,
+					    config.listeners[j].protocol_name,
+					    json_string(buf));
+			    json_array_append_new(listeners,
+						  entry);
+			}
+		    }
+		}
+		else {
+		    ip = ips[i];
+		}
+		/* set accessPoint to be first encountered IP, or iface if set */
+		snprintf(buf, sizeof(buf), "%s://%s:%d",
+			 config.protocol_name, ip, config.port);
+		json_object_set(root, "accessPoint", json_string(buf));
+		once = 0;
+	    }
+	    /* listen on all non-loopback IPs */
+	    for(j = 0; j < config.listener_count; j++)
+	    {
+		if(config.listeners[j].is_disabled == 0) {
+		    snprintf(buf, sizeof(buf), "%s/%d", ips[i],
+			     config.listeners[j].port);
+		    entry = json_object();
+		    json_object_set(entry, config.listeners[j].protocol_name,
+				    json_string(buf));
+		    json_array_append_new(listeners, entry);
+		}
+	    }
+	}
+    }
+
+    *status = 0;
+    return listeners;
+}
+
 static json_t * __unis_get_json_listeners(json_t *root) {
+    int status;
     json_t *listeners;
     char **ips;
     int ip_count, i, once = 1;
 
+    /*Alternative path for generating listners with multiple path*/
+    if (config.listener_count > 0) {
+	listeners = get_multiple_listeners(root, &status);
+	if (status == 0) {
+	    return listeners;
+	}
+    }
     listeners = json_array();
     get_all_ips(&ips, &ip_count);
     for(i = 0; i < ip_count; i++) {
