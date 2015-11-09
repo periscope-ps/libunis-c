@@ -17,6 +17,7 @@ You can then run 'make' to build the library and 'make install' to install the l
 ```
 https://github.com/periscope-ps/libunis-c.git
 cd libunis-c
+./bootstrap.sh
 ./configure
 make
 make install
