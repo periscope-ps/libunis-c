@@ -33,12 +33,12 @@ int unis_curl_init(unis_config *config, curl_context **context){
 	*context = malloc(sizeof(curl_context));
 	
 	(*context)->url = _strdup(config->endpoint);
-    (*context)->use_ssl = config->use_ssl;
-    (*context)->certfile = _strdup(config->certfile);
-    (*context)->keyfile = _strdup(config->keyfile);
-    (*context)->keypass = _strdup(config->keypass);
-    (*context)->cacerts = _strdup(config->cacerts);
-    (*context)->curl_persist = 0;
+	(*context)->use_ssl = config->use_ssl;
+	(*context)->certfile = _strdup(config->certfile);
+	(*context)->keyfile = _strdup(config->keyfile);
+	(*context)->keypass = _strdup(config->keypass);
+	(*context)->cacerts = _strdup(config->cacerts);
+	(*context)->curl_persist = 0;
 	(*context)->use_cookies = 0;
 	(*context)->follow_redirect = 0;
 
@@ -140,7 +140,7 @@ void unis_POST_exnode(unis_config *config, char *post_json, char **response_json
  */
 void unis_GET_exnode(unis_config *config, char **response_json){
 	curl_context *context;
-    curl_response *response;
+	curl_response *response;
 	
 	/*Set return variables to NULL*/
 	*response_json = NULL;
@@ -150,26 +150,25 @@ void unis_GET_exnode(unis_config *config, char **response_json){
 		return;
 	}
 
-
-    dbg_info(DEBUG, "Init curl context\n");
+	dbg_info(DEBUG, "Init curl context\n");
 	if(!unis_curl_init(config, &context)){
 		dbg_info(ERROR, "Failed to init CURL \n");
 		return;
 	}
     
 	curl_get_json_string(context,
-						 NULL,
-						 &response);
+			     NULL,
+			     &response);
 
-    if (response && (response->status != 200)) {
-		dbg_info(ERROR, "Error querying UNIS: %lu: %s", response->status, response->data);
+	if (response && (response->status != 200) && (response->status != 201)) {
+	        dbg_info(ERROR, "Error querying UNIS: %lu: %s", response->status, response->data);
 		goto free_context;
-    }
+	}
 
-    if (response && response->data) {
+	if (response && response->data) {
 		*response_json = (char *)malloc(strlen(response->data) + sizeof(char));
 		strncpy(*response_json, response->data, (strlen(response->data) + sizeof(char)));
-    }
+	}
 
 	/*free curl response*/
 	free_curl_response(response);
@@ -286,7 +285,7 @@ char *_unis_create_directory(curl_context *context, char *dir, char *parent_id){
 		goto free_response;
     }
 	
-	id = parse_json(response->data, "id");
+	id = parse_json(response->data, "selfRef");
 
  free_response:
 	free_curl_response(response);
@@ -354,12 +353,21 @@ char *encode_json(const char *dir, const char *parent_id){
 	// create json object
 	json_t *json_exnode = json_object();
 	json_object_set(json_exnode, "name", json_string(dir));
-	json_object_set(json_exnode, "parent", (parent_id == NULL) ? json_null() : json_string(parent_id));
 	json_object_set(json_exnode, "created", json_integer(time(NULL)));
 	json_object_set(json_exnode, "modified", json_integer(time(NULL)));
 	json_object_set(json_exnode, "mode", json_string("directory"));
 	json_object_set(json_exnode, "size", json_integer(0));
 
+	if (parent_id == NULL) {
+	  json_object_set(json_exnode, "parent", json_null());
+	}
+	else {
+	  json_t *pobj = json_object();
+	  json_object_set(pobj, "href", json_string(parent_id));
+	  json_object_set(pobj, "rel", json_string("full"));
+	  json_object_set(json_exnode, "parent", pobj);
+	}
+	
 	return json_dumps(json_exnode, JSON_INDENT(1));
 }
 
