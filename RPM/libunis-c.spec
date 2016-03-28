@@ -1,4 +1,4 @@
-%define default_release 4
+%define default_release 5
 Name: libunis-c
 Version: 1.0
 Release: %{?release}%{!?release:%{default_release}}
