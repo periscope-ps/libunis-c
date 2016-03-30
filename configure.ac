@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([libunis-c], [1.0], [https://github.com/periscope-ps/libunis-c])
+AC_INIT([libunis-c], [2.0], [https://github.com/periscope-ps/libunis-c])
 AC_CONFIG_SRCDIR([src/unis_registration.c])
 AM_INIT_AUTOMAKE([1.11 subdir-objects])
 LT_INIT()
