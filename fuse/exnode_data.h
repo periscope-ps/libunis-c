@@ -10,7 +10,7 @@
 
 #define BUFFER_SIZE  (256 * 1024)  /* 256 KB */
 
-#define UNIS_URL   "http://dev.crest.iu.edu:8888/exnodes/570aa83fe779892f09f5a4b4" //"http://dev.crest.iu.edu:8888/exnodes?limit=10"
+#define UNIS_URL   "http://dev.crest.iu.edu:8888/exnodes?limit=10" //"http://dev.crest.iu.edu:8888/exnodes/570aa83fe779892f09f5a4b4"
 #define URL_SIZE     256
 
 typedef struct
