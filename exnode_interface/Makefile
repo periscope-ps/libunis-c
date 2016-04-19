@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -Wall -D_FILE_OFFSET_BITS=64
+CFLAGS = -D_FILE_OFFSET_BITS=64
 LIBS = -lfuse -ljansson -lcurl
-DEPS = exnode_data.h
-OBJ = fuse_exnode.o exnode_interface.o
+DEPS = exnode_data.h log.h params.h
+OBJ = fuse_exnode.o exnode_interface.o log.o
 
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c -o $@ $<
