@@ -1,7 +1,7 @@
 %define default_release 1
 Name: libunis-c
 Version: 2.0
-Release: %{?release}%{!?release:%{default_release}}
+Release: %{?release}%{!?release:%{default_release}}%{?dist}
 Summary: Unis C library
 
 Group:	        Library/System
