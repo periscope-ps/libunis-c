@@ -12,6 +12,7 @@
 struct exnode_state {
     FILE *logfile;
     char *rootdir;
+    char *buf_addr;
 };
 #define XNODE_DATA ((struct exnode_state *) fuse_get_context()->private_data)
 

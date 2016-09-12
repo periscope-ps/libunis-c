@@ -8,9 +8,9 @@
 #include <jansson.h>
 #include <curl/curl.h>
 
-#define BUFFER_SIZE  (256 * 1024 * 1024)  /* 256 KB */
+#define BUF_SIZE  (256 * 1024 * 1024)  /* 256 KB */
 
-#define UNIS_URL   "http://dev.crest.iu.edu:8888/exnodes?limit=50" //"http://dev.crest.iu.edu:8888/exnodes/570aa83fe779892f09f5a4b4"
+#define UNIS_URL  "http://unis.crest.iu.edu:8890/exnodes?limit=10000" // change the limit or url as per requirement
 #define URL_SIZE     256
 
 typedef struct
@@ -45,7 +45,7 @@ struct exnode
   parent *parent;
   char *schema;
   extent **extents;
-  struct exnode *child[2000];
+  struct exnode *child[10000];
   int child_cnt;
   char *name;
   char *selfRef;
@@ -61,7 +61,7 @@ typedef struct exnode exnode;
 
 typedef struct
 {
-  exnode *exnode_data[2000];
+  exnode *exnode_data[10000];
   int exnode_cnt;
 }xnode_stack;
 

@@ -9,6 +9,9 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <fuse_interface.h>
 
 #include "exnode_data.h"
 #include "log.h"
@@ -85,7 +88,7 @@ static int xnode_getattr(
 	{
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
-	} 
+	}
 	else
 	{
 		for (i = 0; i < xnode_st->exnode_cnt; i++)
@@ -187,52 +190,94 @@ static int xnode_open(
 	char slash[100] = {0};
 	exnode *res = NULL;
 
-	for (i = 0; i < xnode_st->exnode_cnt; i++)
+	if (strcmp(path, "/") == 0)
 	{
-	  res = getpath((char *) path, xnode_st->exnode_data[i], "/");
-	}
+		valid_path = 1;
+	} 
+	else
+	{
+		for (i = 0; i < xnode_st->exnode_cnt; i++)
+		{
+			res = getpath((char *) path, xnode_st->exnode_data[i], "/");
 
-	if (res != NULL)
-	{
-	   valid_path = 1;
-	
- 	   if ((fi->flags & 3) != O_RDONLY)
-	   {
-		return -EACCES;
-	   }
-	   //break;
+			if (res != NULL)
+			{
+			    break;
+			}
+
+		}
+
+		if (res != NULL)
+		{
+			valid_path = 1;
+
+	  	   	if ((fi->flags & 3) != O_RDONLY)
+	   		{
+			    return -EACCES;
+	   		}
+		}
 	}
 
 	if (valid_path == 0)
 	{
-	  return -ENOENT;
+		return -ENOENT;
 	}
 
 	return 0;
 }
 
-/*static int xnode_read(
+static int xnode_read(
 			 const char *path, 
 			 char *buf, size_t size,
 			 off_t offset,
 		      	 struct fuse_file_info *fi
 		       )
 {
-	size_t len;
-	(void) fi;
-	if(strcmp(path, hello_path) != 0)
-		return -ENOENT;
+	int fd;
+	int res, i;
+	int flag1 = 0;
+	exnode *xn = NULL;
+  	char *buf2;
 
-	len = strlen(str);
-	if (offset < len) {
-		if (offset + size > len)
-			size = len - offset;
-		memcpy(buf, str + offset, size);
-	} else
-		size = 0;
+	for (i = 0; i < xnode_st->exnode_cnt; i++)
+	{
+		xn = getpath((char *) path, xnode_st->exnode_data[i], "/");
 
-	return size;
-}*/
+		if (xn != NULL)
+		{
+		    break;
+		}
+	}
+
+	if (strncmp(xn->mode, "file", 4) == 0)
+	{
+		if (offset == 0)
+		{
+			buf2 = (char *) malloc (xn->size + 1);
+			memset(buf2, 0, xn->size + 1);
+			fuse_lorsDownload(buf2, xn->selfRef);
+			XNODE_DATA->buf_addr = buf2;
+
+			memcpy(buf, XNODE_DATA->buf_addr, size);
+		}
+		else
+		{
+			if ((offset + size) > xn->size)
+			{
+			   size = xn->size - offset;
+			}
+
+			if (NULL != (XNODE_DATA->buf_addr + offset))
+			{
+			   memcpy(buf, XNODE_DATA->buf_addr + offset, size);
+			}
+		}
+
+	      	return size;
+	}
+
+	return 0;
+}
 
 void print_directory_tree(
 			   exnode *xnode
@@ -253,13 +298,14 @@ static struct fuse_operations xnode_opr = {
 						.getattr	= xnode_getattr,
 						.readdir	= xnode_readdir,
 						.open		= xnode_open,
-						//.read		= xnode_read,
+						.read		= xnode_read,
 					   };
+
 
 int main(int argc, char *argv[])
 {
 	int i = 0, j = 0, k = 0;
-	//exnode **xnode_data = exnode_data;
+	struct exnode_state * state_info;
 	char *npath, *mpath;
 	xnode_st = retrieve_exnodes(UNIS_URL);
 
@@ -285,22 +331,17 @@ int main(int argc, char *argv[])
 	      break;
 	   }
 	}
+	
+	state_info = (struct exnode_state *) malloc (sizeof (struct exnode_state));
 
-	struct exnode_state *exnode_data;
-
-	/*for (i = 0; i < xnode_st->exnode_cnt; i++)
+	if (state_info == NULL) 
 	{
-	  print_directory_tree(xnode_st->exnode_data[i]);
-	}*/
-
-	exnode_data = malloc(sizeof(struct exnode_state));
-    	if (exnode_data == NULL) {
-		perror("main calloc");
-		abort();
+	   perror("main calloc");
+	   abort();
     	}
 
-	exnode_data->logfile = log_open();
+	state_info->buf_addr = NULL;
+	
 
-
-	return fuse_main(argc, argv, &xnode_opr, exnode_data);
+	return fuse_main(argc, argv, &xnode_opr, state_info);
 }

@@ -19,7 +19,7 @@ static size_t write_response(
 {
     struct write_result *result = (struct write_result *)stream;
 
-    if(result->pos + size * nmemb >= BUFFER_SIZE - 1)
+    if(result->pos + size * nmemb >= BUF_SIZE - 1)
     {
         fprintf(stderr, "error: too small buffer\n");
         return 0;
@@ -46,7 +46,7 @@ static char *request(
     if(!curl)
         goto error;
 
-    data = malloc(BUFFER_SIZE);
+    data = malloc(BUF_SIZE);
     if(!data)
         goto error;
 
@@ -87,13 +87,18 @@ static char *request(
     return data;
 
 error:
-    if(data)
+    if(NULL != data)
+    {
         free(data);
+	data = NULL;
+    }
+
     if(curl)
         curl_easy_cleanup(curl);
     if(headers)
         curl_slist_free_all(headers);
     curl_global_cleanup();
+
     return NULL;
 }
 
@@ -104,23 +109,38 @@ xnode_stack * process_exnode(
     int i = 0;
     //exnode *xnode_data = exnode_data;
     int index = 0;
-    exnode *xnode;
-    json_t *arr_data;
-    json_t *root;
+    exnode *xnode = NULL;
+    json_t *arr_data = NULL;
+    json_t *root = NULL;
     json_error_t error;
-    parent *parentt;
-    json_t *p, *href, *rel;
-    json_t *schema, *name, *selfRef, *created, *modified, *ts, *mode, *id, *size, *extents;
+    parent *parentt = NULL;
+    json_t *p = NULL;
+    json_t *href = NULL;
+    json_t *rel = NULL;
+    json_t *schema = NULL;
+    json_t *name = NULL;
+    json_t *selfRef = NULL;
+    json_t *created = NULL;
+    json_t *modified = NULL;
+    json_t *ts = NULL;
+    json_t *mode = NULL;
+    json_t *id = NULL;
+    json_t *size = NULL;
+    json_t *extents = NULL;
     //extent **extents;
     //struct exnode **exnodes;
-    xnode_stack *xnode_st;
+    xnode_stack *xnode_st = NULL;
 
     xnode_st = (xnode_stack *) malloc (1 * sizeof(xnode_stack));
     memset(xnode_st, 0, sizeof(xnode_stack));
 
-    //printf("Text is %s\n", text);
     root = json_loads(text, 0, &error);
-    free(text);
+
+    if (NULL != text)
+    {
+    	free(text);
+ 	text = NULL;
+    }
 
     if(!root)
     {
@@ -133,9 +153,6 @@ xnode_stack * process_exnode(
 	arr_data = json_array();
 	json_array_append_new(arr_data, root);
 	root = arr_data;
-        //printf("------> root is not an array\n");
-        //json_decref(root);
-        //return 1;
     }
 
     for(i = 0; i < json_array_size(root); i++)
@@ -256,11 +273,7 @@ xnode_stack * process_exnode(
 	xnode->size = json_integer_value(size);
 
 	xnode->child_cnt = 0;
-
-	//printf("parent = %s\nname = %s\nselfRef = %s\nmode = %s\nid = %s\nsize = %ld\nschema = %s\n-------\n\n", 
-	//	xnode->parent->href, xnode->name, xnode->selfRef, xnode->mode, xnode->id, xnode->size, xnode->schema);
 	xnode_st->exnode_data[index] = xnode;
-	//printf("exnode name = %s\n", xnode_st->exnode_data[index]->name);
  	index++;
     }
     xnode_st->exnode_cnt = index;
@@ -274,41 +287,42 @@ int free_exnodes (
 		   xnode_stack *xs
 		 )
 {
-  int i = 0;
+    int i = 0;
 
-  for (i = 0; i < xs->exnode_cnt; i++)
-  {
-    free(xs->exnode_data[i]);
-  }
+    for (i = 0; i < xs->exnode_cnt; i++)
+    {
+    	if (NULL != xs->exnode_data[i])
+    	{
+      	    free(xs->exnode_data[i]);
+      	    xs->exnode_data[i] = NULL;
+    	}
+    }
 
-  free(xs);
+    if (NULL != xs)
+    {
+        free(xs);
+        xs = NULL;
+    }
 
-  return 0;
+    return 0;
 }
 
 xnode_stack * retrieve_exnodes(
 				char url[]
 			      )
 {
-    char *text;
-    //char url[URL_SIZE];
-    //exnode *exnode_data[2000] = {0};
+    char *text = NULL;
     int xnode_cnt = 0;
-    xnode_stack *xnode_st;
-
-    //sprintf(url, UNIS_URL);
-    //printf ("\nURL is %s\n", url);
+    xnode_stack *xnode_st = NULL;
 
     text = request(url);
 
-    if (!text)
+    if (!text || !strncmp(text, "[]", 2))
     {
         return NULL;
     }
 
     xnode_st = process_exnode(text);
-
-    //free_exnodes(exnode_data, xnode_cnt);
 
     return xnode_st;
 } 
@@ -341,9 +355,7 @@ char * get_parent_id(
    token = strtok(parent_location, s);
    
    while (token != NULL) 
-   {
-      //printf( " %s\n", token );
-    
+   {    
       token = strtok(NULL, s);
       if (NULL != token)
       {
@@ -351,8 +363,6 @@ char * get_parent_id(
       }
    }
    
-   //printf("parent id is %s\n", token2);
-
    return token2;
 }
 
@@ -363,8 +373,6 @@ exnode * find_parent (
 {
   	int i = 0;
 	exnode *xnod = NULL;
-
-	//printf("path is %s\n", xnode->name);
 
 	if (strncmp(parent_id, xnode->id, strlen(parent_id)) == 0)
 	{
@@ -403,7 +411,6 @@ xnode_stack * create_filesystem_tree(
        {
           parent_id = get_parent_id(xnode_s->exnode_data[i]->parent->href);
           parent_found = 0;
-	  //printf("----> parent id -> %s\n", parent_id);
 
 
 	  if (NULL != parent_id)
@@ -414,8 +421,6 @@ xnode_stack * create_filesystem_tree(
 
 	        if (NULL != xnod)
 	        {
-		   //printf("---------> xnode id -> %s\n", xnod->id);
-		   //parent_found = 1;
 		   break;
 	        }
              }
@@ -429,23 +434,32 @@ xnode_stack * create_filesystem_tree(
 
 	        if (NULL != xnod)
 	        {
-		   //parent_found = 1;
 		   break;
 	        }
 	     }
           }
 	     
-	  if (NULL != xnod)  //(strncmp(parent_id, xnode_parent->exnode_data[j]->id, strlen(parent_id)) == 0)
+	  if (NULL != xnod)
 	  {
 	     insert_exnode(xnod, xnode_s->exnode_data[i]);
 	     parent_found = 1;
 	  }
-          else   //if (parent_found == 0)
+          else
           {
 	     xnode_stack *xs = retrieve_exnodes(xnode_s->exnode_data[i]->parent->href);
-	     xnode_parent->exnode_data[index] = xs->exnode_data[0];
-	     insert_exnode(xnode_parent->exnode_data[index], xnode_s->exnode_data[i]);
-	     index++;
+	
+	     if (NULL != xs)
+	     {
+	        xnode_parent->exnode_data[index] = xs->exnode_data[0];
+	        insert_exnode(xnode_parent->exnode_data[index], xnode_s->exnode_data[i]);
+	        index++;
+	     }
+	     else
+	     {
+		xnode_parent->exnode_data[index] = xnode_s->exnode_data[i];
+		xnode_s->exnode_data[i]->parent = NULL;
+	        index++;
+	     }
           }
        }
        else
