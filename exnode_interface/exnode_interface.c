@@ -3,6 +3,7 @@ Libunis-c Exnode Interface  *
 *****************************/
 
 #include "exnode_data.h"
+#include "log.h"
 
 struct write_result
 {
@@ -107,7 +108,6 @@ xnode_stack * process_exnode(
 			    )
 {
     int i = 0;
-    //exnode *xnode_data = exnode_data;
     int index = 0;
     exnode *xnode = NULL;
     json_t *arr_data = NULL;
@@ -127,8 +127,6 @@ xnode_stack * process_exnode(
     json_t *id = NULL;
     json_t *size = NULL;
     json_t *extents = NULL;
-    //extent **extents;
-    //struct exnode **exnodes;
     xnode_stack *xnode_st = NULL;
 
     xnode_st = (xnode_stack *) malloc (1 * sizeof(xnode_stack));
@@ -175,7 +173,6 @@ xnode_stack * process_exnode(
         {
 	    if (json_is_null(p))
 	    {
-		//fprintf(stderr, "error: parent is null\n");
 	    	parentt = NULL;
 		xnode->parent = parentt;
 	    }
@@ -184,7 +181,6 @@ xnode_stack * process_exnode(
             	fprintf(stderr, "error: [%d] parent is not a json object\n", (int)(i + 1));
             	return 0;
 	    }
-	    //parentt = NULL;
         }
 	else
 	{
@@ -201,8 +197,6 @@ xnode_stack * process_exnode(
 
 	   xnode->parent = parentt;
 	}
-
-	//udata[index].href = json_string_value(href);
 
         schema = json_object_get(data, "$schema");
         if(!json_is_string(schema))
@@ -222,7 +216,6 @@ xnode_stack * process_exnode(
             json_decref(root);
             return 0;
         }
-	//xnode->name = json_string_value(name);
 	xnode->name = (char*) malloc ((strlen(json_string_value(name))+1) * sizeof(char));
 	memset(xnode->name, 0, strlen(xnode->name));
 	strcpy(xnode->name, json_string_value(name));
@@ -234,7 +227,6 @@ xnode_stack * process_exnode(
             json_decref(root);
             return 0;
         }
-	//xnode->selfRef = json_string_value(selfRef);
 	xnode->selfRef = (char*) malloc ((strlen(json_string_value(selfRef))+1) * sizeof(char));
 	memset(xnode->selfRef, 0, strlen(xnode->selfRef));
 	strcpy(xnode->selfRef, json_string_value(selfRef));
@@ -246,7 +238,6 @@ xnode_stack * process_exnode(
             json_decref(root);
             return 0;
         }
-	//xnode->mode = json_string_value(mode);
 	xnode->mode = (char*) malloc ((strlen(json_string_value(mode))+1) * sizeof(char));
 	memset(xnode->mode, 0, strlen(xnode->mode));
 	strcpy(xnode->mode, json_string_value(mode));
@@ -258,7 +249,6 @@ xnode_stack * process_exnode(
             json_decref(root);
             return 0;
         }
-	//xnode->id = json_string_value(id);
 	xnode->id = (char*) malloc ((strlen(json_string_value(id))+1) * sizeof(char));
 	memset(xnode->id, 0, strlen(xnode->id));
 	strcpy(xnode->id, json_string_value(id));
@@ -334,7 +324,6 @@ void insert_exnode(
 {
     if (NULL != parent_xnode)
     {
-       parent_xnode->child[parent_xnode->child_cnt] = (struct exnode *) malloc (1 * sizeof(exnode));
        parent_xnode->child[parent_xnode->child_cnt] = (struct exnode *) child_exnode;
        parent_xnode->child_cnt++;
     }
@@ -366,30 +355,229 @@ char * get_parent_id(
    return token2;
 }
 
+char * get_filename(
+		      const char *path
+		    )
+{
+   char *file_path;
+   const char s[2] = "/";
+   char *token, *token2;
+   
+   file_path = (char *) malloc (200);
+   memset(file_path, 0, 200);
+   strncpy(file_path, path, strlen(path));
+
+   token = strtok(file_path, s);
+   
+   while (token != NULL) 
+   {    
+      token = strtok(NULL, s);
+      if (NULL != token)
+      {
+	 token2 = token;
+      }
+   }
+   
+   return token2;
+}
+
+char * get_path_prefix(
+		         const char *path,
+			 char *filename
+		      )
+{
+   char *file_path;
+   char *token, *token2;
+   
+   file_path = (char *) malloc (200);
+   memset(file_path, 0, 200);
+   strncpy(file_path, path, strlen(path));
+
+   token = strtok(file_path, filename);
+   
+   while (token != NULL) 
+   {    
+      token = strtok(NULL, filename);
+      if (NULL != token)
+      {
+	 token2 = token;
+      }
+   }
+   
+   return token;
+}
+
 exnode * find_parent (
 		        exnode *xnode,
 		        char *parent_id
 	 	     )
 {
-  	int i = 0;
-	exnode *xnod = NULL;
+    int i = 0;
+    exnode *xnod = NULL;
 
-	if (strncmp(parent_id, xnode->id, strlen(parent_id)) == 0)
+    if (strncmp(parent_id, xnode->id, strlen(parent_id)) == 0)
+    {
+	return xnode;
+    }
+
+    for (i = 0; i < xnode->child_cnt; i++)
+    {
+	xnod = find_parent (xnode->child[i], parent_id);
+
+	if (xnod != NULL)
 	{
-	   return xnode;
+	    return xnod;
 	}
+    }
+
+    return NULL;
+}
+
+exnode * _retrieve_parent (
+		             char *parent_id,
+		             exnode *parent_node
+		          )
+{
+    int i = 0;
+    exnode *parent = NULL;
+
+    for (i = 0; i < parent_node->child_cnt; i++)
+    {
+	if (strcmp(parent_id, parent_node->child[i]->id) == 0)
+	{
+	    return parent_node->child[i];
+	}
+
+	parent = _retrieve_parent(parent_id, parent_node->child[i]);
+
+	if (parent != NULL)
+	{
+	    return parent;
+	}
+    }
+
+    return parent;
+}
+
+exnode * retrieve_parent (
+	 	            char *parent_id,
+		            xnode_stack *xnode_st
+		         )
+{
+    int i, j;
+    exnode *parent = NULL;
+
+    for (i = 0; i < xnode_st->exnode_cnt; i++)
+    {
+	if (strcmp(parent_id, xnode_st->exnode_data[i]->id) == 0)
+	{
+	    return xnode_st->exnode_data[i];
+	}
+ 
+	for (j = 0; j < xnode_st->exnode_data[i]->child_cnt; j++)
+	{
+	    if (strcmp(parent_id, xnode_st->exnode_data[i]->child[j]->id) == 0)
+	    {
+	        return xnode_st->exnode_data[i]->child[j];
+	    }
+
+	    parent = _retrieve_parent(parent_id, xnode_st->exnode_data[i]->child[j]);
+
+	    if (parent != NULL)
+	    {
+	        return parent;
+	    }
+	}
+    }
+
+    return parent;
+}
+
+void insert_child (
+		    exnode *child,
+		    xnode_stack *xnode_st
+		 )
+{
+    int i = 0, ret = 0;
+    char *parentRef = NULL;
+    char *parent_id = NULL;
+    exnode *parent = NULL, *x_temp = NULL;
+    xnode_stack *xs_temp = NULL;
+
+    if (child->parent != NULL)
+    {
+       parentRef = child->parent->href;
+    }
+
+    //log_msg("insert_child : child->parent->href : %s\n", child->parent->href);
+
+    if (parentRef == NULL)
+    {
+       log_msg("insert_child : parentRef is NULL\n");
+
+       for (i = 0; i < xnode_st->exnode_cnt; i++)
+       {
+	  if (strcmp(xnode_st->exnode_data[i]->id, child->id) == 0)
+	  {
+	     return;
+	  }
+       }
+
+       xnode_st->exnode_data[xnode_st->exnode_cnt] = child;
+       xnode_st->exnode_cnt++;
+
+       return;
+    }
+
+    parent_id = get_parent_id(parentRef);
+    parent = retrieve_parent(parent_id, xnode_st);
+
+    //log_msg("insert_child : parent_id = %s\n", parent_id);
+
+    if (parent == NULL)
+    {
+       //log_msg("insert_child : parent = NULL\n");
+
+       xs_temp = retrieve_exnodes(parentRef);
+       x_temp = xs_temp->exnode_data[0];
+
+       x_temp->child[x_temp->child_cnt] = child;
+       x_temp->child_cnt++;
+
+       insert_child(x_temp, xnode_st);
+    }
+    else
+    {
+       for (i = 0; i < parent->child_cnt; i++)
+       {
+	  if (strcmp(parent->child[i]->id, child->id) == 0)
+	  {
+	     return;
+	  }
+       }
+
+       //log_msg("insert_child : child name = %s\n", child->name);
+
+       parent->child[parent->child_cnt] = child;
+       parent->child_cnt++;
+    }
+
+    return;
+}
+
+void print_directory_tree(
+			   exnode *xnode
+			 )
+{
+  	int i = 0;
+
+	printf("path is %s\n", xnode->name);
 
 	for (i = 0; i < xnode->child_cnt; i++)
 	{
-	   xnod = find_parent (xnode->child[i], parent_id);
-
-	   if (xnod != NULL)
-	   {
-	      return xnod;
-	   }
+	   print_directory_tree(xnode->child[i]);
 	}
 
-	return NULL;
 }
 
 xnode_stack * create_filesystem_tree(
@@ -407,7 +595,7 @@ xnode_stack * create_filesystem_tree(
     {
        xnod = NULL;
 
-       if (xnode_s->exnode_data[i]->parent != NULL)
+       if ((xnode_s->exnode_data[i]->parent != NULL) && (strcmp(xnode_s->exnode_data[i]->parent->href, "") != 0))
        {
           parent_id = get_parent_id(xnode_s->exnode_data[i]->parent->href);
           parent_found = 0;
@@ -464,6 +652,8 @@ xnode_stack * create_filesystem_tree(
        }
        else
        {
+	  xnode_s->exnode_data[i]->parent = NULL;
+
 	  xnode_parent->exnode_data[index] = xnode_s->exnode_data[i];
           index++;
        }

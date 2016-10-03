@@ -10,8 +10,10 @@
 
 #define BUF_SIZE  (256 * 1024 * 1024)  /* 256 KB */
 
-#define UNIS_URL  "http://unis.crest.iu.edu:8890/exnodes?limit=10000" // change the limit or url as per requirement
+#define UNIS_URL  "http://unis.crest.iu.edu:8890/exnodes?limit=100"   //"http://unis.crest.iu.edu:8890/exnodes/572ae4c8377f97536a9df67b"
+//"http://dev.crest.iu.edu:8888/exnodes?limit=50" //"http://dev.crest.iu.edu:8888/exnodes/570aa83fe779892f09f5a4b4"
 #define URL_SIZE     256
+#define UNIS_ENDPOINT "http://unis.crest.iu.edu:8890/exnodes"
 
 typedef struct
 {
@@ -67,5 +69,11 @@ typedef struct
 
 xnode_stack * process_exnode(char *text);
 int free_exnodes (xnode_stack *xnode_s);
+char * get_parent_id(char parent_href[]);
+char * get_filename(const char *path);
+char * get_path_prefix(const char *path, char *filename);
+exnode * _retrieve_parent (char *parent_id, exnode *parent_node);
+exnode * retrieve_parent (char *parent_id, xnode_stack *xnode_st);
+void insert_child (exnode *child, xnode_stack *xnode_st);
 xnode_stack * retrieve_exnodes (char url[]);
 xnode_stack * create_filesystem_tree(xnode_stack *);
