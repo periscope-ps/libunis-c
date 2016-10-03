@@ -10,7 +10,7 @@
 
 #define BUF_SIZE  (256 * 1024 * 1024)  /* 256 KB */
 
-#define UNIS_URL  "http://unis.crest.iu.edu:8890/exnodes?limit=100"   //"http://unis.crest.iu.edu:8890/exnodes/572ae4c8377f97536a9df67b"
+#define UNIS_URL  "http://unis.crest.iu.edu:8890/exnodes?limit=10000"   //"http://unis.crest.iu.edu:8890/exnodes/572ae4c8377f97536a9df67b"
 //"http://dev.crest.iu.edu:8888/exnodes?limit=50" //"http://dev.crest.iu.edu:8888/exnodes/570aa83fe779892f09f5a4b4"
 #define URL_SIZE     256
 #define UNIS_ENDPOINT "http://unis.crest.iu.edu:8890/exnodes"
