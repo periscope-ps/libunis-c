@@ -1,13 +1,13 @@
 CC = gcc
 CFLAGS = -g -O2 -D_LINUX -D_FILE_OFFSET_BITS=64 -DEXNODE_LOG
-INCLUDE = -I/home/paven/RA/dlt-lors-master/include -I$(FUSEINC) -I$(LBNINC) -I$(XML2_INC) -I/usr/local/include
-FUSEINC = /home/paven/RA/dlt-lors-master/cmdtools
-FUSELIB = -L/home/paven/RA/dlt-lors-master/cmdtools -lfuseifc
-LIBS = $(FUSELIB) $(XML2_LIB) -lfuse -ljansson -lcurl -lpthread -lxml2 -lunis-c -lwebsockets -luuid -lm -lnsl
+INCLUDE = -I$(FUSEINC) -I$(LBNINC) -I$(XML2_INC) -I$(FUSEINC) -I$(LORSINC) -I/usr/local/include
+LIBS = -lfuseifc $(XML2_LIB) -lfuse -ljansson -lcurl -lpthread -lxml2 -lunis-c -lwebsockets -luuid -lm -lnsl
 EXTRA_LIBS = 
 DEPS = exnode_data.h log.h params.h
 OBJ = fuse_exnode.o exnode_interface.o log.o
-LBNINC = /home/paven/local/include
+FUSEINC = /usr/local/include/fuse_exnode
+LORSINC = /usr/local/include/lors
+LBNINC = /usr/local/include
 XML2_INC = /usr/include/libxml2
 XML2_LIB = -L/usr/lib
 
