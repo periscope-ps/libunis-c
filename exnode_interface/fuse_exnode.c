@@ -98,6 +98,9 @@ static int xnode_getattr(
     }		
     else
     {
+        if (NULL == xnode_st)
+      	    return XNODE_SUCCESS;
+
 	for (i = 0; i < xnode_st->exnode_cnt; i++)
 	{
 	    res = getpath((char *) path, xnode_st->exnode_data[i], "/");
@@ -155,6 +158,9 @@ static int xnode_readdir(
 
     log_msg("\nxnode_readdir : path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x\n", path, buf, filler, offset, fi);
 
+    if (NULL == xnode_st)
+        return XNODE_SUCCESS;
+
     if (strcmp(path, "/") == 0)
     {
         filler(buf, ".", NULL, 0);
@@ -169,7 +175,6 @@ static int xnode_readdir(
     {
 	for (i = 0; i < xnode_st->exnode_cnt; i++)
 	{
-	    //log_msg("--- path is %s\n", path);
 	    res = getpath((char *) path, xnode_st->exnode_data[i], "/");
 
 	    if (res != NULL)
@@ -218,6 +223,9 @@ static int xnode_open(
     }		
     else
     {
+    	if (NULL == xnode_st)
+            return XNODE_SUCCESS;
+
 	for (i = 0; i < xnode_st->exnode_cnt; i++)
 	{
 	    res = getpath((char *) path, xnode_st->exnode_data[i], "/");
@@ -266,6 +274,9 @@ static int xnode_read(
     log_msg("\nxnode_read : path = \"%s\", buf = 0x%08x, size = %d, offset = %lld, fi = 0x%08x\n", path, buf, size, offset, fi);
     log_fi(fi);
 
+    if (NULL == xnode_st)
+        return XNODE_SUCCESS;
+
     for (i = 0; i < xnode_st->exnode_cnt; i++)
     {
 	xn = getpath((char *) path, xnode_st->exnode_data[i], "/");
@@ -301,7 +312,6 @@ static int xnode_read(
 		buf2 = (char *) malloc (xn->size + 1);
 		memset(buf2, 0, xn->size + 1);
 		fuse_lorsDownload(buf2, xn->selfRef);
-
 		XNODE_DATA->buf_addr = buf2;
 
 		temp = XNODE_DATA->exnode_cache;
@@ -664,6 +674,10 @@ void * xnode_init(
 		 )
 {
     log_msg("\nxnode_init :\n");
+
+    pthread_t pid;
+    pthread_create(&pid, NULL, lws_fuse, NULL);
+
     log_conn(conn);
     log_fuse_context(fuse_get_context());
     
@@ -762,6 +776,39 @@ static struct fuse_operations xnode_opr = {
 					   };
 
 
+void * fuse_call (void *arg)
+{
+    struct exnode_state *state_info;
+    int fuse_status = 0;
+    char **argv = (char **) arg;
+
+    state_info = (struct exnode_state *) malloc (sizeof (struct exnode_state));
+
+    state_info->exnode_cache = (cache *) malloc (1 * sizeof (cache));
+    state_info->exnode_cache->id = NULL;
+    state_info->exnode_cache->buffer = NULL;
+    state_info->exnode_cache->size = 0;
+    state_info->exnode_cache->next = NULL;
+
+    state_info->crf = (created_files *) malloc (1 * sizeof (created_files));
+    state_info->crf->path = NULL;
+
+    if (state_info == NULL) 
+    {
+	perror("!!! Memory allocation failed !!!");
+	abort();
+    }
+
+    state_info->buf_addr = NULL;
+    state_info->logfile = log_open();
+
+    fprintf(stderr, "Fuse library version %d.%d\n", FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION);
+    fuse_status = fuse_main(2, argv, &xnode_opr, state_info);
+    
+    return NULL;
+}
+
+
 int main(int argc, char *argv[])
 {
     int i = 0, j = 0, k = 0, fuse_status = 0;
@@ -770,7 +817,7 @@ int main(int argc, char *argv[])
 
     xnode_st = retrieve_exnodes(UNIS_URL);
 
-    while (1)
+    while (1 && (NULL != xnode_st))
     {
 	k = 0;
 

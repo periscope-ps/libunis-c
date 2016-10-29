@@ -134,17 +134,12 @@ xnode_stack * process_exnode(
 
     root = json_loads(text, 0, &error);
 
-    if (NULL != text)
-    {
-    	free(text);
- 	text = NULL;
-    }
-
     if(!root)
     {
         fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
-        return 0;
+        return NULL;
     }
+
 
     if(!json_is_array(root))
     {
@@ -165,8 +160,17 @@ xnode_stack * process_exnode(
         {
             fprintf(stderr, "error: data [%d] is not an object\n", (int)(i + 1));
             json_decref(root);
-            return 0;
+            return NULL;
         }
+
+ 	json_t *data_value;
+
+    	data_value = json_object_get(data, "data");
+
+	if (NULL != data_value)
+	{
+	    data = data_value;
+	}
 
         p = json_object_get(data, "parent");
         if(!json_is_object(p))
@@ -179,7 +183,7 @@ xnode_stack * process_exnode(
 	    else
 	    {
             	fprintf(stderr, "error: [%d] parent is not a json object\n", (int)(i + 1));
-            	return 0;
+            	return NULL;
 	    }
         }
 	else
@@ -199,11 +203,15 @@ xnode_stack * process_exnode(
 	}
 
         schema = json_object_get(data, "$schema");
-        if(!json_is_string(schema))
+        if (!json_is_string(schema))
         {
-            fprintf(stderr, "error: [%d] schema is not a string\n", (int)(i + 1));
-            json_decref(root);
-            return 0;
+	    schema = json_object_get(data, "\\$schema"); // websocket subscription updates used "\\$schema" for schema
+	    if (!json_is_string(schema))
+	    {
+                fprintf(stderr, "error: [%d] schema is not a string\n", (int)(i + 1));
+                json_decref(root);
+            	return NULL;
+	    }
         }
 	xnode->schema = (char*) malloc ((strlen(json_string_value(schema))+1) * sizeof(char));
 	memset(xnode->schema, 0, strlen(xnode->schema));
@@ -214,7 +222,7 @@ xnode_stack * process_exnode(
         {
             fprintf(stderr, "error: [%d] name is not a string\n", (int)(i + 1));
             json_decref(root);
-            return 0;
+            return NULL;
         }
 	xnode->name = (char*) malloc ((strlen(json_string_value(name))+1) * sizeof(char));
 	memset(xnode->name, 0, strlen(xnode->name));
@@ -225,7 +233,7 @@ xnode_stack * process_exnode(
         {
             fprintf(stderr, "error: [%d] selfRef is not a string\n", (int)(i + 1));
             json_decref(root);
-            return 0;
+            return NULL;
         }
 	xnode->selfRef = (char*) malloc ((strlen(json_string_value(selfRef))+1) * sizeof(char));
 	memset(xnode->selfRef, 0, strlen(xnode->selfRef));
@@ -236,7 +244,7 @@ xnode_stack * process_exnode(
         {
             fprintf(stderr, "error: [%d] mode is not a string\n", (int)(i + 1));
             json_decref(root);
-            return 0;
+            return NULL;
         }
 	xnode->mode = (char*) malloc ((strlen(json_string_value(mode))+1) * sizeof(char));
 	memset(xnode->mode, 0, strlen(xnode->mode));
@@ -247,7 +255,7 @@ xnode_stack * process_exnode(
         {
             fprintf(stderr, "error: [%d] id is not a string\n", (int)(i + 1));
             json_decref(root);
-            return 0;
+            return NULL;
         }
 	xnode->id = (char*) malloc ((strlen(json_string_value(id))+1) * sizeof(char));
 	memset(xnode->id, 0, strlen(xnode->id));
@@ -258,7 +266,7 @@ xnode_stack * process_exnode(
         {
             fprintf(stderr, "error: [%d] size is not an integer\n", (int)(i + 1));
             json_decref(root);
-            return 0;
+            return NULL;
         }
 	xnode->size = json_integer_value(size);
 
@@ -509,12 +517,8 @@ void insert_child (
        parentRef = child->parent->href;
     }
 
-    //log_msg("insert_child : child->parent->href : %s\n", child->parent->href);
-
     if (parentRef == NULL)
     {
-       log_msg("insert_child : parentRef is NULL\n");
-
        for (i = 0; i < xnode_st->exnode_cnt; i++)
        {
 	  if (strcmp(xnode_st->exnode_data[i]->id, child->id) == 0)
@@ -532,12 +536,8 @@ void insert_child (
     parent_id = get_parent_id(parentRef);
     parent = retrieve_parent(parent_id, xnode_st);
 
-    //log_msg("insert_child : parent_id = %s\n", parent_id);
-
     if (parent == NULL)
     {
-       //log_msg("insert_child : parent = NULL\n");
-
        xs_temp = retrieve_exnodes(parentRef);
        x_temp = xs_temp->exnode_data[0];
 
@@ -555,8 +555,6 @@ void insert_child (
 	     return;
 	  }
        }
-
-       //log_msg("insert_child : child name = %s\n", child->name);
 
        parent->child[parent->child_cnt] = child;
        parent->child_cnt++;
