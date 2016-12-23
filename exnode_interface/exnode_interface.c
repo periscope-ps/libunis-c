@@ -369,22 +369,27 @@ char * get_filename(
 {
    char *file_path;
    const char s[2] = "/";
-   char *token, *token2;
+   char *token = NULL, *token2 = NULL, *token3 = NULL;
    
    file_path = (char *) malloc (200);
    memset(file_path, 0, 200);
    strncpy(file_path, path, strlen(path));
 
    token = strtok(file_path, s);
-   
+   token3 = token;
+
    while (token != NULL) 
    {    
       token = strtok(NULL, s);
+
       if (NULL != token)
       {
 	 token2 = token;
       }
    }
+
+   if (token2 == NULL)
+     token2 = token3;
    
    return token2;
 }
@@ -661,3 +666,134 @@ xnode_stack * create_filesystem_tree(
     return xnode_parent;
 }
 
+unsigned char * libdlt_download(char *selfRef)
+{
+    log_msg("\nlibdlt_upload : selfRef = %s", selfRef);
+
+    Py_Initialize();
+
+    PyObject* main = PyImport_AddModule("__main__");
+    PyObject* argparse = PyImport_ImportModule("argparse");
+    PyObject* json = PyImport_ImportModule("json");
+    PyObject* libdlt = PyImport_ImportModule("libdlt");
+    PyModule_AddObject(main, "argparse", argparse);
+    PyModule_AddObject(main, "json", json);
+    PyModule_AddObject(main, "libdlt", libdlt);
+    PyObject* globalDictionary = PyModule_GetDict(main);
+    PyObject* localDictionary = PyDict_New();
+
+    PyDict_SetItemString(globalDictionary, "selfRef", PyUnicode_FromString(selfRef));
+    PyDict_SetItemString(globalDictionary, "UNIS_URL", PyUnicode_FromString("http://dev.crest.iu.edu:8888"));
+    PyDict_SetItemString(globalDictionary,
+			 "DEPOTS",
+			 PyUnicode_FromString("{\"ceph://um-mon01.osris.org\": {\"clustername\": \"osiris\","
+                                                                                "\"config\": \"/etc/ceph/osiris.conf\","
+                                                                                "\"pool\": \"dlt\","
+                                                                                "\"crush_map\": \"None\"}," 
+                                                "\"ibp://ibp2.crest.iu.edu:6714\": {\"duration\": 2592000}}"));
+
+    PyRun_String(
+		  "def main():\n"
+		  "    bs = '5m'\n"
+		  "    depots = None\n"
+
+		  "    if DEPOTS:\n"
+		  "        try:\n"
+		  "            depots = json.loads(DEPOTS)\n"
+		  "        except Exception as e:\n"
+		  "            print (\"ERROR: Could not read depot file: {}\".format(e))\n"
+		  "            exit(1)\n"
+
+		  "    host = UNIS_URL\n"
+		  "    sess = libdlt.Session(host, bs=bs, depots=depots, **{\"viz_url\": None})\n"
+		  "    sess.use_buffer = True\n"
+		  "    xfer = sess.download\n"
+        
+		  "    files = [selfRef]\n"
+		  "    for f in files:\n"
+		  "        diff, res = xfer(f, None)\n"
+		  "        print (\"{0} ({1} {2:.2f} MB/s) {3}\".format(res.name, res.size, res.size/1e6/diff, res.selfRef))\n"
+
+		  "    return sess.data_buffer\n"
+
+ 
+		  "if __name__ == \"__main__\":\n"
+		  "    data = main()\n"
+		  "    download_data = bytes(data)\n",
+	 	  Py_file_input, globalDictionary, localDictionary);
+
+    PyObject* data = PyDict_GetItemString(localDictionary, "download_data");
+    unsigned char *res_buffer = PyBytes_AsString(data);
+
+    Py_Finalize();
+
+    return res_buffer;
+}
+
+char * libdlt_upload(char *path_prefix, char *filename, const char *buf, long size)
+{
+    log_msg("\nlibdlt_upload : path = %s, filename = %s, size = %ld", path_prefix, filename, size);
+
+    Py_Initialize();
+
+    PyObject* main = PyImport_AddModule("__main__");
+    PyObject* argparse = PyImport_ImportModule("argparse");
+    PyObject* json = PyImport_ImportModule("json");
+    PyObject* libdlt = PyImport_ImportModule("libdlt");
+    PyModule_AddObject(main, "argparse", argparse);
+    PyModule_AddObject(main, "json", json);
+    PyModule_AddObject(main, "libdlt", libdlt);
+    PyObject* globalDictionary = PyModule_GetDict(main);
+    PyObject* localDictionary = PyDict_New();
+
+    PyDict_SetItemString(globalDictionary, "data", PyBytes_FromStringAndSize(buf, PyLong_AsSsize_t(PyLong_FromLong(size))));
+    PyDict_SetItemString(globalDictionary, "data_size", PyLong_FromLong(size));    
+    PyDict_SetItemString(globalDictionary, "filename", PyUnicode_FromString(filename));
+    PyDict_SetItemString(globalDictionary, "output", PyUnicode_FromString(path_prefix));
+    PyDict_SetItemString(globalDictionary, "UNIS_URL", PyUnicode_FromString("http://dev.crest.iu.edu:8888"));
+    PyDict_SetItemString(globalDictionary,
+			 "DEPOTS",
+			 PyUnicode_FromString("{\"ceph://um-mon01.osris.org\": {\"clustername\": \"osiris\","
+                                                                                "\"config\": \"/etc/ceph/osiris.conf\","
+                                                                                "\"pool\": \"dlt\","
+                                                                                "\"crush_map\": \"None\"}," 
+                                                "\"ibp://ibp2.crest.iu.edu:6714\": {\"duration\": 2592000}}"));
+
+    PyRun_String(
+		  "def main():\n"
+		  "    bs = '5m'\n"
+		  "    depots = None\n"
+		  
+		  "    if DEPOTS:\n"
+		  "        try:\n"
+		  "            depots = json.loads(DEPOTS)\n"
+		  "        except Exception as e:\n"
+		  "            print (\"ERROR: Could not read depot file: {}\".format(e))\n"
+		  "            exit(1)\n"
+
+		  "    host = UNIS_URL\n"
+		  "    sess = libdlt.Session(host, bs=bs, depots=depots, **{\"viz_url\": None})\n"
+		  "    sess.use_buffer = True\n"
+		  "    sess.data_buffer = data\n"
+                  "    sess.data_buffer_size = data_size\n"
+		  "    xfer = sess.upload\n"
+        
+		  "    files = [filename]\n"
+		  "    for f in files:\n"
+		  "        diff, res = xfer(f, output)\n"
+		  "        print (\"{0} ({1} {2:.2f} MB/s) {3}\".format(res.name, res.size, res.size/1e6/diff, res.selfRef))\n"
+
+		  "    return res.selfRef\n"
+
+ 
+		  "if __name__ == \"__main__\":\n"
+		  "    selfRef = main()\n",
+	 	  Py_file_input, globalDictionary, localDictionary);
+
+    PyObject* pyStr = PyUnicode_AsEncodedString(PyDict_GetItemString(localDictionary, "selfRef"), "utf-8", "Error ~");
+    char *selfRef = PyBytes_AsString(pyStr);
+
+    Py_Finalize();
+
+    return selfRef;
+}

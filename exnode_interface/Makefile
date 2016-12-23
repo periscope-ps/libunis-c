@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -O2 -D_LINUX -D_FILE_OFFSET_BITS=64 -DEXNODE_LOG
-INCLUDE = -I$(FUSEINC) -I$(LBNINC) -I$(XML2_INC) -I$(FUSEINC) -I$(LORSINC) -I/usr/local/include
-LIBS = -lfuseifc $(XML2_LIB) -lfuse -ljansson -lcurl -lpthread -lxml2 -lunis-c -lwebsockets -luuid -lm -lnsl
+INCLUDE = -I/usr/include -I$(FUSEINC) -I$(LBNINC) -I$(XML2_INC) -I$(FUSEINC) -I$(LORSINC) -I/usr/include/python3.4m
+LIBS = $(XML2_LIB) -lfuse -ljansson -lcurl -lpthread -lxml2 -lunis-c -lwebsockets -luuid -lm -lnsl -lpython3.4m
 EXTRA_LIBS = 
 DEPS = exnode_data.h log.h params.h
 OBJ = fuse_exnode.o exnode_interface.o lws_exnode.o log.o
@@ -9,7 +9,7 @@ FUSEINC = /usr/local/include/fuse_exnode
 LORSINC = /usr/local/include/lors
 LBNINC = /usr/local/include
 XML2_INC = /usr/include/libxml2
-XML2_LIB = -L/usr/lib
+XML2_LIB = -L/usr/lib64
 
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<

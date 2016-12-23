@@ -13,12 +13,13 @@
 
 #include <jansson.h>
 #include <curl/curl.h>
+#include <Python.h>
 
 #define BUF_SIZE  (256 * 1024 * 1024)  /* 256 KB */
 
-#define UNIS_URL  "http://unis.crest.iu.edu:8890/exnodes?limit=10000"
+#define UNIS_URL  "http://dev.crest.iu.edu:8888/exnodes" //"http://unis.crest.iu.edu:8890/exnodes?limit=100"
 #define URL_SIZE  256
-#define UNIS_ENDPOINT "http://unis.crest.iu.edu:8890/exnodes"
+#define UNIS_ENDPOINT "http://dev.crest.iu.edu:8888/exnodes" //"http://unis.crest.iu.edu:8890/exnodes"
 
 static int close_connection = 0;
 
@@ -86,6 +87,8 @@ exnode * retrieve_parent (char *parent_id, xnode_stack *xnode_st);
 void insert_child (exnode *child, xnode_stack *xnode_st);
 xnode_stack * retrieve_exnodes (char url[]);
 xnode_stack * create_filesystem_tree(xnode_stack *);
+unsigned char * libdlt_download(char *selfRef);
+char * libdlt_upload(char *path_prefix, char *filename, const char *buf, long size);
 
 static int lws_service_callback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 void * lws_fuse (void *message);

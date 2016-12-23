@@ -96,11 +96,11 @@ void * lws_fuse (void *arg)
 
     memset(&connect_info, 0, sizeof(connect_info));
     connect_info.context = context;
-    connect_info.address = "unis.crest.iu.edu";
-    connect_info.port = 8890;
+    connect_info.address = "dev.crest.iu.edu"; //"unis.crest.iu.edu";
+    connect_info.port = 8888; //8890;
     connect_info.ssl_connection = 0; 
     connect_info.path = "/subscribe/exnodes";
-    connect_info.host = "unis.crest.iu.edu:8890";
+    connect_info.host = "dev.crest.iu.edu:8888";  //"unis.crest.iu.edu:8890";
     connect_info.origin = NULL;
     connect_info.protocol = NULL;
     connect_info.ietf_version_or_minus_one = -1;
