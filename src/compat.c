@@ -26,12 +26,12 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE. 
+ * SUCH DAMAGE.
  * * * *
  *
- * The second license is OpenBSD's ISC-like license, which is used for 
+ * The second license is OpenBSD's ISC-like license, which is used for
  * strlcpy() and strlcat().  See the license later on in the file.
- * 
+ *
  * Everthing else has had its copyright explicitly disclaimed by the author.
  */
 
@@ -85,46 +85,46 @@ error_exit:
 }
 
 int get_all_ips(char ***ret_ips, int *ret_ip_count) {
-	struct ifaddrs *ifaces, *curr;
-	char **ips;
-	int ip_count;
+  struct ifaddrs *ifaces, *curr;
+  char **ips;
+  int ip_count;
 
-	if (getifaddrs(&ifaces) != 0) {
-		fprintf(stderr, "Failed to get interfaces for host\n");
-		return -1;
-	}
+  if (getifaddrs(&ifaces) != 0) {
+    fprintf(stderr, "Failed to get interfaces for host\n");
+    return -1;
+  }
 
-	ips = NULL;
-	ip_count = 0;
+  ips = NULL;
+  ip_count = 0;
 
-	for(curr = ifaces; curr != NULL; curr = curr->ifa_next) {
-		char ip[255];
-		size_t salen;
+  for(curr = ifaces; curr != NULL; curr = curr->ifa_next) {
+    char ip[255];
+    size_t salen;
 
-		if (!curr->ifa_addr)
-			continue;
+    if (!curr->ifa_addr)
+      continue;
 
-		if (curr->ifa_addr->sa_family == AF_INET)
-			salen = sizeof (struct sockaddr_in);
-		else if (curr->ifa_addr->sa_family == AF_INET6)
-			salen = sizeof (struct sockaddr_in6);
-		else
-			continue;
+    if (curr->ifa_addr->sa_family == AF_INET)
+      salen = sizeof (struct sockaddr_in);
+    else if (curr->ifa_addr->sa_family == AF_INET6)
+      salen = sizeof (struct sockaddr_in6);
+    else
+      continue;
 
 
-		if (getnameinfo (curr->ifa_addr, salen, ip, sizeof (ip), NULL, 0, NI_NUMERICHOST) < 0) {
-			continue;
-		}
+    if (getnameinfo (curr->ifa_addr, salen, ip, sizeof (ip), NULL, 0, NI_NUMERICHOST) < 0) {
+      continue;
+    }
 
-		if (_strlist_add(ip, &ips, &ip_count) != 0) {
-			continue;
-		}
-	}
+    if (_strlist_add(ip, &ips, &ip_count) != 0) {
+      continue;
+    }
+  }
 
-	*ret_ips = ips;
-	*ret_ip_count = ip_count;
+  *ret_ips = ips;
+  *ret_ip_count = ip_count;
 
-	return 0;
+  return 0;
 }
 
 char* Strdup(const char* source) {

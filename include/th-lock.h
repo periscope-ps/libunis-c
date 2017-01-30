@@ -12,12 +12,12 @@
 // =============================================================================
 /*!
  * @file th-lock.h
- * @brief 
+ * @brief
  *
  * @author
  * @date 02/02/2013
  * @version
- * @details 
+ * @details
  *
  */
 #ifndef TH_LOCK_H
@@ -37,15 +37,15 @@
 #include <pthread.h>
 #include <openssl/crypto.h>
 
-struct CRYPTO_dynlock_value { 
-   MUTEX_TYPE mutex; 
+struct CRYPTO_dynlock_value {
+  MUTEX_TYPE mutex;
 };
 
 /*!
  * @brief
  *
  * @fn locking_function(int mode, int n, const char *file, int line)
- * @param mode 
+ * @param mode
  * @param n
  * @param file
  * @param line

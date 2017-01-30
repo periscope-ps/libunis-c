@@ -42,26 +42,26 @@
  * @details [detailed description]
  */
 typedef struct curl_context_t {
-	CURL *curl;       /**< CURL pointer */
-	char *url;        /**< char pointer to URL */
-	
-	int curl_persist; /**< this integer is used for */
-	int use_ssl;      /**< are we using SSL? */
-	int use_cookies;  /**< are we using cookies? */
-	int follow_redirect; /**< should we follow 302? */
+  CURL *curl;       /**< CURL pointer */
+  char *url;        /**< char pointer to URL */
 
-	char *certfile;   /**< char pointer to certfile */
-	char *keyfile;    /**< char pointer to keyfile */
-	char *keypass;    /**< char pointer to keypass */
-	char *cacerts;    /**< char pointer to cacerts */
-	char *cookiejar;  /**< char pointer to cookie jar */
+  int curl_persist; /**< this integer is used for */
+  int use_ssl;      /**< are we using SSL? */
+  int use_cookies;  /**< are we using cookies? */
+  int follow_redirect; /**< should we follow 302? */
+
+  char *certfile;   /**< char pointer to certfile */
+  char *keyfile;    /**< char pointer to keyfile */
+  char *keypass;    /**< char pointer to keypass */
+  char *cacerts;    /**< char pointer to cacerts */
+  char *cookiejar;  /**< char pointer to cookie jar */
 } curl_context;
 
 typedef struct curl_response_t {
-	char *data;
-	char *redirect_url;
-	char *content_type;
-	long status;
+  char *data;
+  char *redirect_url;
+  char *content_type;
+  long status;
 } curl_response;
 
 /*!
@@ -75,12 +75,12 @@ typedef struct curl_response_t {
  *
  */
 struct curl_http_data {
-        char *ptr;       /**< char pointer to */
-        long len;        /**< length */
+  char *ptr;       /**< char pointer to */
+  long len;        /**< length */
 };
 
 /*!
- * @brief 
+ * @brief
  *
  * @fn init_curl(curl_context *cc, long flags)
  * @param cc
@@ -99,7 +99,7 @@ int curl_cleanup(curl_context *cc);
 int free_curl_response(curl_response *cr);
 
 /*!
- * @brief 
+ * @brief
  *
  * @fn copy_curl_context(curl_context *src, curl_context *dst)
  * @param src
@@ -111,12 +111,12 @@ int free_curl_response(curl_response *cr);
 int copy_curl_context(curl_context *src, curl_context *dst);
 
 char *curl_post(curl_context *cc, char *target, char *accept_type, char *content_type,
-		    char *post_fields, char *post_data, curl_response **ret_data);
+                char *post_fields, char *post_data, curl_response **ret_data);
 
 char *curl_get(curl_context *cc, char *target, char *accept_type, curl_response **ret_data);
 
 /*!
- * @brief 
+ * @brief
  *
  * @fn curl_post_json_string(curl_context *cc, char *target, char *send_str, curl_response *ret_data)
  * @param cc
@@ -124,21 +124,21 @@ char *curl_get(curl_context *cc, char *target, char *accept_type, curl_response 
  * @param send_str
  * @param ret_str
  * @return Returns a curl response struct
- * 
- * @details 
+ *
+ * @details
  */
 char *curl_post_json_string(curl_context *cc, char *target, char *send_str, curl_response **ret_data);
 
 /*!
- * @brief 
+ * @brief
  *
  * @fn curl_get_json_string(curl_context *cc, char *target, char *send_str, curl_response *ret_data)
  * @param cc
  * @param target
  * @param ret_str
  * @return Returns a curl response struct
- * 
- * @details 
+ *
+ * @details
  */
 char *curl_get_json_string(curl_context *cc, char *target, curl_response **ret_data);
 
