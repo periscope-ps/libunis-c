@@ -4,8 +4,12 @@
 AC_PREREQ([2.69])
 AC_INIT([libunis-c], [2.1], [https://github.com/periscope-ps/libunis-c])
 AC_CONFIG_SRCDIR([src/unis_registration.c])
-AM_INIT_AUTOMAKE([1.11 subdir-objects])
-LT_INIT()
+
+AM_INIT_AUTOMAKE([1.11 dist-bzip2 subdir-objects foreign tar-ustar -Wall -Werror])
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+LT_PREREQ([2.2.6])
+LT_INIT
 
 # Checks for programs.
 AC_PROG_CC
