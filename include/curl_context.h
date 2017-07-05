@@ -50,6 +50,9 @@ typedef struct curl_context_t {
   int use_cookies;  /**< are we using cookies? */
   int follow_redirect; /**< should we follow 302? */
 
+  char *username;   /**< char pointer to username */
+  char *password;   /**< char pointer to password */
+  char *oauth_token;/**< char pointer to oauth token */
   char *certfile;   /**< char pointer to certfile */
   char *keyfile;    /**< char pointer to keyfile */
   char *keypass;    /**< char pointer to keypass */

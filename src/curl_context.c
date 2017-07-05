@@ -230,10 +230,25 @@ static char *__curl_do_operation(curl_context *cc, struct curl_slist* headers, i
     curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cc->cookiejar);
   }
 
+  if (cc->username) {
+    curl_easy_setopt(curl, CURLOPT_USERNAME, cc->username);
+  }
+
+  if (cc->password) {
+    curl_easy_setopt(curl, CURLOPT_PASSWORD, cc->password);
+  }
+
+  if (cc->oauth_token) {
+    char *hdr;
+    asprintf(&hdr, "Authorization: OAuth %s", cc->oauth_token);
+    headers = curl_slist_append(headers, hdr);
+    free(hdr);
+  }
+  
   if (headers) {
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   }
-
+  
   if (fields && (curl_opt & CURLOPT_HTTPPOST)) {
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fields);
   }

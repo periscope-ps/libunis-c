@@ -20,10 +20,10 @@
 #include <jansson.h>
 #include <pthread.h>
 
-#include <curl_context.h>
-#include <unis_registration.h>
-#include <libunis_c_log.h>
-#include <compat.h>
+#include "curl_context.h"
+#include "unis_registration.h"
+#include "libunis_c_log.h"
+#include "compat.h"
 
 static unis_config config;
 static curl_context context;
