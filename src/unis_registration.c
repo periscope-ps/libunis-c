@@ -266,7 +266,7 @@ static void *unis_registration_thread(void *arg) {
       gettimeofday(&now, NULL);
       json_object_set(reg_json, "ts", json_integer(now.tv_sec*1e6 + now.tv_usec));
       if (sid) {
-        dbg_info(DEBUG, "\nsid=%s", sid);
+        dbg_info(DEBUG, "sid=%s\n", sid);
         json_object_set(reg_json, "id", json_string(sid));
       }
 
@@ -294,7 +294,7 @@ static void *unis_registration_thread(void *arg) {
         json_t *key;
         resp = json_loads(response->data, 0, &json_err);
         if (!resp) {
-          dbg_info(ERROR, "Could not decode registration response! %d: %s",
+          dbg_info(ERROR, "Could not decode registration response! %d: %s\n",
                    json_err.line, json_err.text);
           return NULL;
         }

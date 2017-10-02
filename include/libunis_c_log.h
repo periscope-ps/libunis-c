@@ -17,8 +17,6 @@
 
 #define LOG_MSG_SIZE  4098
 
-//We do not have any other way to enable debugging now. So compile with -DDEBUG
-//if you would like to print debug messages on stdout
 #define dbg_info(level, ...) \
               do {\
                     if(_log_func != NULL) {\
@@ -28,9 +26,8 @@
                     }\
               } while (0)
 
-//internal variable, do not manipulate directly
-//todo: do we really need to set this to NULL???
 void (*_log_func)(int level, const char* msg);
+
 // internally used for various log levels, in future, we can also have pluggable log levels
 // but I think that is too much. Better to debug
 #define ERROR 0
