@@ -31,8 +31,8 @@ static pthread_t thread;
 static char *reg_str = NULL;
 static char *service_instance = "\
 {\
-  \"status\": \"ON\",\
-    \"$schema\": \"http://unis.incntre.iu.edu/schema/20140214/service#\",\
+    \"status\": \"ON\",\
+    \"$schema\": \"http://unis.crest.iu.edu/schema/20160630/service#\",\
     \"serviceType\": \"\",\
     \"name\": \"\",\
     \"accessPoint\": \"\",\
@@ -405,7 +405,7 @@ json_t *get_multiple_listeners(json_t *root, int *status) {
     }
     else {
       if (once) {
-        char *ip;
+        char *ip = "";
         if (config.iface) {
           /* add listener entry for specified iface */
           for(j = 0; j<config.listener_count; j++) {
