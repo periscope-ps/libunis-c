@@ -17,4 +17,5 @@ libunis_c_la_LDFLAGS = -export-dynamic
 
 registration_test_SOURCES = registration_test.c
 registration_test_LDADD = libunis-c.la
+registration_test_LDFLAGS = -lssl
 
