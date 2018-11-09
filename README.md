@@ -9,6 +9,9 @@ For building you need the following packages installed:
   - Curl Library (we tested with libcurl4-openssl-dev)
   - Jansson Library
   - Pthread
+  - autoconf
+  - libtool
+  - libssl-dev
 
 
 To build this library you should be able to unpack the tarball and then run configure with appropriate options as needed.
@@ -22,6 +25,8 @@ cd libunis-c
 make
 make install
 ```
+
+> Ubuntu users, see issues #4 and #5 for troubleshooting.
 
 Run Example
 -------------------------------------------------------------------------------
